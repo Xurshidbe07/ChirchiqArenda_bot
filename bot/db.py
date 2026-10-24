@@ -65,11 +65,25 @@ async def set_phone(telegram_id: int, phone: str) -> None:
     await pool().execute("UPDATE users SET phone = $2 WHERE telegram_id = $1", telegram_id, phone)
 
 
-async def list_users(offset: int = 0, limit: int = 10, blocked: bool | None = None) -> list[asyncpg.Record]:
-    where = "" if blocked is None else "WHERE is_blocked = $3"
+async def list_users(
+    offset: int = 0,
+    limit: int = 10,
+    blocked: bool | None = None,
+    q: str | None = None,
+) -> list[asyncpg.Record]:
+    """Klientlar ro'yxati. `q` — ism, username yoki telegram_id bo'yicha qidiruv."""
+    conds: list[str] = []
     args: list[Any] = [limit, offset]
     if blocked is not None:
         args.append(blocked)
+        conds.append(f"is_blocked = ${len(args)}")
+    if q:
+        args.append(f"%{q.strip()}%")
+        conds.append(
+            f"(full_name ILIKE ${len(args)} OR username ILIKE ${len(args)} "
+            f"OR telegram_id::text LIKE ${len(args)})"
+        )
+    where = f"WHERE {' AND '.join(conds)}" if conds else ""
     return await pool().fetch(
         f"SELECT * FROM users {where} ORDER BY created_at DESC LIMIT $1 OFFSET $2", *args
     )

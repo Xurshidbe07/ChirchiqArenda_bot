@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin panel</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --bg2: var(--tg-theme-secondary-bg-color, #f2f3f5);
+    --text: var(--tg-theme-text-color, #111111);
+    --hint: var(--tg-theme-hint-color, #8a8f98);
+    --link: var(--tg-theme-link-color, #2481cc);
+    --btn: var(--tg-theme-button-color, #2481cc);
+    --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --danger: #e5484d;
+    --ok: #30a46c;
+    --warn: #f5a524;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg2); color: var(--text);
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { padding-bottom: 90px; }
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 12px 16px 0;
+    box-shadow: 0 1px 0 rgba(0,0,0,.06); }
+  header h1 { margin: 0 0 8px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+  header h1 small { color: var(--hint); font-weight: 400; font-size: 13px; }
+  .tabs { display: flex; gap: 4px; }
+  .tab { flex: 1; text-align: center; padding: 10px 4px; border-bottom: 2px solid transparent;
+    color: var(--hint); cursor: pointer; font-weight: 500; user-select: none; }
+  .tab.active { color: var(--link); border-color: var(--link); }
+  main { padding: 12px 16px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 12px; margin-bottom: 10px;
+    display: flex; gap: 12px; align-items: flex-start; }
+  .thumb { width: 72px; height: 72px; border-radius: 10px; background: var(--bg2); flex: none;
+    object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .card .body { flex: 1; min-width: 0; }
+  .card .title { font-weight: 600; margin-bottom: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .card .meta { color: var(--hint); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .price { margin-top: 4px; font-weight: 600; }
+  .badge { font-size: 11px; padding: 2px 7px; border-radius: 999px; color: #fff; font-weight: 600; }
+  .badge.ok { background: var(--ok); } .badge.off { background: var(--hint); } .badge.danger { background: var(--danger); }
+  .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  button { border: 0; border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; background: var(--bg2); color: var(--text); }
+  button.primary { background: var(--btn); color: var(--btn-text); }
+  button.danger { background: rgba(229,72,77,.12); color: var(--danger); }
+  button.ok { background: rgba(48,164,108,.14); color: var(--ok); }
+  button:disabled { opacity: .5; cursor: default; }
+  .fab { position: fixed; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 20;
+    background: var(--btn); color: var(--btn-text); border-radius: 999px; padding: 14px 20px; font-size: 15px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+  .search { width: 100%; padding: 11px 14px; border-radius: 12px; border: 0; background: var(--card);
+    color: var(--text); font: inherit; margin-bottom: 10px; outline: none; }
+  .chips { display: flex; gap: 6px; margin-bottom: 10px; }
+  .chip { padding: 6px 12px; border-radius: 999px; background: var(--card); color: var(--hint); font-size: 13px; cursor: pointer; }
+  .chip.active { background: var(--btn); color: var(--btn-text); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat { background: var(--card); border-radius: var(--radius); padding: 16px; }
+  .stat .n { font-size: 30px; font-weight: 700; } .stat .l { color: var(--hint); font-size: 13px; }
+  .empty { text-align: center; color: var(--hint); padding: 40px 10px; }
+  .hidden { display: none !important; }
+  /* modal */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 30; display: flex; align-items: flex-end; }
+  .sheet { background: var(--bg); width: 100%; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    max-height: 92vh; overflow: auto; }
+  .sheet h2 { margin: 0 0 12px; font-size: 17px; }
+  label { display: block; font-size: 13px; color: var(--hint); margin: 10px 0 4px; }
+  input, textarea, select { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,.08);
+    background: var(--bg2); color: var(--text); font: inherit; outline: none; }
+  textarea { min-height: 70px; resize: vertical; }
+  .row { display: flex; gap: 10px; } .row > * { flex: 1; }
+  .sheet .actions { margin-top: 14px; } .sheet .actions button { flex: 1; padding: 12px; font-size: 15px; }
+  .reason { margin-top: 8px; display: flex; gap: 6px; } .reason input { flex: 1; }
+  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #222; color: #fff;
+    padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 50; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .95; }
+  .center { padding: 60px 20px; text-align: center; color: var(--hint); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛠 Admin panel <small id="who"></small></h1>
+  <div class="tabs">
+    <div class="tab active" data-tab="houses">🏠 Uylar</div>
+    <div class="tab" data-tab="users">👥 Klientlar</div>
+    <div class="tab" data-tab="stats">📊 Statistika</div>
+  </div>
+</header>
+
+<main>
+  <section id="houses">
+    <div class="chips">
+      <span class="chip active" data-f="all">Hammasi</span>
+      <span class="chip" data-f="active">Faol</span>
+      <span class="chip" data-f="hidden">Yashirilgan</span>
+    </div>
+    <div id="houses-list"></div>
+  </section>
+
+  <section id="users" class="hidden">
+    <input class="search" id="user-q" placeholder="Ism, @username yoki ID bo'yicha qidirish">
+    <div class="chips">
+      <span class="chip active" data-b="all">Hammasi</span>
+      <span class="chip" data-b="0">Faol</span>
+      <span class="chip" data-b="1">Bloklangan</span>
+    </div>
+    <div id="users-list"></div>
+  </section>
+
+  <section id="stats" class="hidden">
+    <div class="stats" id="stats-grid"></div>
+  </section>
+
+  <div id="gate" class="center hidden">
+    ⚠️ Bu sahifa faqat Telegram ichida, admin akkaunt bilan ochiladi.
+    <div id="gate-msg" style="margin-top:8px;font-size:13px"></div>
+  </div>
+</main>
+
+<button class="fab" id="fab">＋ Uy qo'shish</button>
+
+<div class="modal hidden" id="modal">
+  <div class="sheet">
+    <h2>➕ Yangi uy</h2>
+    <form id="house-form">
+      <label>Nomi *</label><input name="title" required maxlength="120" placeholder="2 xonali, markazda">
+      <label>Manzil *</label><input name="address" required maxlength="250" placeholder="Chirchiq, Yoshlik mavzesi 12-uy">
+      <div class="row">
+        <div><label>Xonalar *</label><input name="rooms" type="number" min="1" max="50" required placeholder="2"></div>
+        <div><label>Narx (so'm/oy) *</label><input name="price" type="number" min="0" step="1000" required placeholder="2500000"></div>
+      </div>
+      <label>Telefon</label><input name="contact_phone" maxlength="30" placeholder="+998901234567">
+      <label>Tavsif</label><textarea name="description" maxlength="1500" placeholder="Remont, mebel, qavat..."></textarea>
+      <label>Rasm</label><input name="photo" type="file" accept="image/*">
+      <div class="actions">
+        <button type="button" id="cancel">Bekor qilish</button>
+        <button type="submit" class="primary" id="save">Saqlash</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const initData = tg ? tg.initData : "";
+  if (tg) { tg.ready(); tg.expand(); }
+
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const money = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+  function haptic(type) { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(type); } catch (e) {} }
+  // Telegram ichida — showConfirm; tashqarida (brauzer) — oddiy confirm
+  const inTelegram = !!(tg && tg.platform && tg.platform !== "unknown" && tg.initDataUnsafe && tg.initDataUnsafe.query_id);
+  function confirmDlg(msg) {
+    return new Promise((res) => {
+      if (inTelegram && tg.showConfirm) tg.showConfirm(msg, res); else res(window.confirm(msg));
+    });
+  }
+
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ Authorization: "tma " + initData }, opts.headers || {});
+    const r = await fetch(path, Object.assign({}, opts, { headers }));
+    if (!r.ok) throw new Error((await r.text()) || ("HTTP " + r.status));
+    return r.status === 204 ? null : r.json();
+  }
+  const photoUrl = (id) => "/api/photo/" + encodeURIComponent(id) + "?_auth=" + encodeURIComponent(initData);
+
+  // ---------- gate ----------
+  if (!initData) {
+    document.querySelectorAll("main > section").forEach((s) => s.classList.add("hidden"));
+    $("#gate").classList.remove("hidden"); $("#fab").classList.add("hidden");
+    return;
+  }
+
+  // ---------- tabs ----------
+  const loaders = { houses: loadHouses, users: loadUsers, stats: loadStats };
+  document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
+    document.querySelectorAll("main > section").forEach((s) => s.classList.toggle("hidden", s.id !== t.dataset.tab));
+    $("#fab").classList.toggle("hidden", t.dataset.tab !== "houses");
+    loaders[t.dataset.tab]();
+  }));
+
+  // ---------- houses ----------
+  let houses = [], houseFilter = "all";
+  document.querySelectorAll("#houses .chip").forEach((c) => c.addEventListener("click", () => {
+    document.querySelectorAll("#houses .chip").forEach((x) => x.classList.toggle("active", x === c));
+    houseFilter = c.dataset.f; renderHouses();
+  }));
+
+  async function loadHouses() {
+    try { houses = await api("/api/houses"); renderHouses(); }
+    catch (e) { $("#houses-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+  function renderHouses() {
+    const list = houses.filter((h) => houseFilter === "all" || (houseFilter === "active" ? h.is_active : !h.is_active));
+    if (!list.length) { $("#houses-list").innerHTML = `<div class="empty">Uylar yo'q</div>`; return; }
+    $("#houses-list").innerHTML = list.map((h) => `
+      <div class="card" data-id="${h.id}">
+        ${h.photo_file_id ? `<img class="thumb" loading="lazy" src="${photoUrl(h.photo_file_id)}" alt="">` : `<div class="thumb">🏠</div>`}
+        <div class="body">
+          <div class="title">#${h.id} ${esc(h.title)}
+            <span class="badge ${h.is_active ? "ok" : "off"}">${h.is_active ? "faol" : "yashirin"}</span></div>
+          <div class="meta">📍 ${esc(h.address)} · 🚪 ${h.rooms} xona${h.contact_phone ? " · 📞 " + esc(h.contact_phone) : ""}</div>
+          <div class="price">${money(h.price)} so'm / oy</div>
+          <div class="actions">
+            <button data-act="toggle">${h.is_active ? "🙈 Yashirish" : "👁 Ko'rsatish"}</button>
+            <button class="danger" data-act="del">🗑 O'chirish</button>
+          </div>
+        </div>
+      </div>`).join("");
+  }
+  $("#houses-list").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-act]"); if (!btn) return;
+    const id = +btn.closest(".card").dataset.id; const h = houses.find((x) => x.id === id);
+    btn.disabled = true;
+    try {
+      if (btn.dataset.act === "del") {
+        if (!(await confirmDlg(`#${id} «${h.title}» o'chirilsinmi?`))) { btn.disabled = false; return; }
+        await api("/api/houses/" + id, { method: "DELETE" });
+        houses = houses.filter((x) => x.id !== id); haptic("success"); toast("O'chirildi");
+      } else {
+        const upd = await api("/api/houses/" + id, { method: "PATCH", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_active: !h.is_active }) });
+        Object.assign(h, upd); haptic("success");
+      }
+      renderHouses();
+    } catch (err) { haptic("error"); toast(err.message); btn.disabled = false; }
+  });
+
+  // ---------- add house modal ----------
+  const modal = $("#modal"), form = $("#house-form");
+  $("#fab").addEventListener("click", () => { form.reset(); modal.classList.remove("hidden"); });
+  $("#cancel").addEventListener("click", () => modal.classList.add("hidden"));
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const save = $("#save"); save.disabled = true; save.textContent = "Saqlanmoqda…";
+    try {
+      const h = await api("/api/houses", { method: "POST", body: new FormData(form) });
+      houses.unshift(h); renderHouses(); modal.classList.add("hidden"); haptic("success"); toast(`Uy #${h.id} qo'shildi`);
+    } catch (err) { haptic("error"); toast(err.message); }
+    finally { save.disabled = false; save.textContent = "Saqlash"; }
+  });
+
+  // ---------- users ----------
+  let users = [], userBlocked = "all", qTimer;
+  $("#user-q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(loadUsers, 300); });
+  document.querySelectorAll("#users .chip").forEach((c) => c.addEventListener("click", () => {
+    document.querySelectorAll("#users .chip").forEach((x) => x.classList.toggle("active", x === c));
+    userBlocked = c.dataset.b; loadUsers();
+  }));
+  async function loadUsers() {
+    try {
+      const p = new URLSearchParams({ q: $("#user-q").value, blocked: userBlocked });
+      users = (await api("/api/users?" + p)).items; renderUsers();
+    } catch (e) { $("#users-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+  function renderUsers() {
+    if (!users.length) { $("#users-list").innerHTML = `<div class="empty">Klientlar topilmadi</div>`; return; }
+    $("#users-list").innerHTML = users.map((u) => `
+      <div class="card" data-id="${u.telegram_id}">
+        <div class="thumb">${u.is_blocked ? "🚫" : "👤"}</div>
+        <div class="body">
+          <div class="title">${esc(u.full_name) || "—"} ${u.is_blocked ? `<span class="badge danger">bloklangan</span>` : ""}</div>
+          <div class="meta">${u.username ? "@" + esc(u.username) + " · " : ""}ID ${u.telegram_id}${u.phone ? " · 📞 " + esc(u.phone) : ""}</div>
+          ${u.is_blocked && u.block_reason ? `<div class="meta">Sabab: ${esc(u.block_reason)}</div>` : ""}
+          <div class="actions">
+            ${u.is_blocked
+              ? `<button class="ok" data-act="unblock">✅ Blokdan chiqarish</button>`
+              : `<button class="danger" data-act="block">🚫 Bloklash</button>`}
+          </div>
+          <div class="reason hidden">
+            <input placeholder="Sabab (ixtiyoriy)" maxlength="300">
+            <button class="danger" data-act="block-confirm">Bloklash</button>
+          </div>
+        </div>
+      </div>`).join("");
+  }
+  $("#users-list").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-act]"); if (!btn) return;
+    const card = btn.closest(".card"); const id = +card.dataset.id;
+    if (btn.dataset.act === "block") { card.querySelector(".reason").classList.remove("hidden"); card.querySelector(".reason input").focus(); return; }
+    btn.disabled = true;
+    try {
+      let upd;
+      if (btn.dataset.act === "block-confirm") {
+        const reason = card.querySelector(".reason input").value;
+        upd = await api(`/api/users/${id}/block`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
+        toast("Bloklandi");
+      } else {
+        upd = await api(`/api/users/${id}/unblock`, { method: "POST" }); toast("Blokdan chiqarildi");
+      }
+      haptic("success");
+      const i = users.findIndex((u) => u.telegram_id === id); if (i >= 0) users[i] = upd;
+      if (userBlocked !== "all") await loadUsers(); else renderUsers();
+    } catch (err) { haptic("error"); toast(err.message); btn.disabled = false; }
+  });
+
+  // ---------- stats ----------
+  async function loadStats() {
+    try {
+      const s = await api("/api/stats");
+      $("#stats-grid").innerHTML = [
+        ["👥 Klientlar", s.users_total], ["🚫 Bloklangan", s.users_blocked],
+        ["🏠 Uylar", s.houses_total], ["🟢 Faol uylar", s.houses_active],
+      ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+    } catch (e) { $("#stats-grid").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+
+  // ---------- boot ----------
+  api("/api/me").then((me) => { $("#who").textContent = me.name; loadHouses(); })
+    .catch((e) => {
+      document.querySelectorAll("main > section").forEach((s) => s.classList.add("hidden"));
+      $("#gate").classList.remove("hidden"); $("#gate-msg").textContent = e.message; $("#fab").classList.add("hidden");
+    });
+})();
+</script>
+</body>
+</html>

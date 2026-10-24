@@ -5,7 +5,25 @@ Chirchiq shahrida ijaraga uylar bo'yicha Telegram bot.
 
 ## Imkoniyatlar
 
-### Admin panel (`/admin`)
+### Admin Mini App (`/admin`)
+`/admin` yuborilganda **«🛠 Admin panelni ochish»** tugmasi keladi — Telegram ichida interfeysli
+Mini App ochiladi (chat pastidagi «Admin» menyu tugmasi ham shuni ochadi):
+
+- 🏠 **Uylar** — ro'yxat (rasm, narx, holat), yashirish/ko'rsatish, o'chirish, «+ Uy qo'shish» formasi (rasm bilan)
+- 👥 **Klientlar** — qidiruv (ism / @username / ID), filtr, bloklash (sabab bilan) / blokdan chiqarish
+- 📊 **Statistika**
+
+Texnik: `bot/webapp/server.py` (aiohttp API) + `bot/webapp/static/index.html`.
+Har bir so'rov Telegram `initData` imzosi bilan tekshiriladi, faqat `ADMIN_IDS` kiradi.
+
+Mini App uchun HTTPS manzil kerak:
+- **Dev:** `WEBAPP_URL` bo'sh qoldiring va [cloudflared](https://github.com/cloudflare/cloudflared/releases)
+  o'rnating (`winget install Cloudflare.cloudflared`). Bot ishga tushganda o'zi vaqtinchalik tunnel ochadi.
+- **Server:** `WEBAPP_URL=https://sizning-domen.uz` yozing va 8080-portni nginx/caddy orqali HTTPS bilan oching.
+
+### Tugmali admin menyu (`/menu`)
+Mini App ishlamasa zaxira variant — oddiy reply-klaviatura:
+
 | Tugma | Vazifasi |
 |---|---|
 | ➕ Uy qo'shish | Bosqichma-bosqich (FSM) yangi e'lon: nomi, manzil, xonalar, narx, tavsif, telefon, rasm → tasdiqlash |
@@ -78,8 +96,12 @@ ChirchiqArendabot/
 │   ├── filters.py       # IsAdmin filtri
 │   ├── keyboards.py     # reply/inline klaviaturalar
 │   ├── states.py        # FSM holatlari
+│   ├── tunnel.py        # dev uchun cloudflared HTTPS tunnel
+│   ├── webapp/
+│   │   ├── server.py    # Mini App API (aiohttp)
+│   │   └── static/index.html  # Mini App interfeysi
 │   └── handlers/
-│       ├── admin.py     # admin panel
+│       ├── admin.py     # /admin (Mini App), /menu (tugmali), admin handlerlar
 │       └── user.py      # klient qismi
 ├── sql/schema.sql       # jadvallar
 ├── requirements.txt

@@ -7,7 +7,13 @@ from decimal import Decimal, InvalidOperation
 from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+    WebAppInfo,
+)
 
 from bot import db
 from bot import keyboards as kb
@@ -29,10 +35,35 @@ NOT_MENU = ~F.text.in_(kb.ADMIN_MENU_BUTTONS)
 # ====================================================================== MENU ===
 
 @router.message(Command("admin"))
-async def cmd_admin(message: Message, state: FSMContext) -> None:
+async def cmd_admin(message: Message, state: FSMContext, webapp_url: str = "") -> None:
+    """Mini App tugmasini yuboradi; manzil bo'lmasa oddiy menyuga o'tadi."""
+    await state.clear()
+    if not webapp_url:
+        await message.answer(
+            "⚠️ Mini App manzili sozlanmagan (WEBAPP_URL yoki cloudflared yo'q).\n"
+            "Oddiy menyu ochildi:",
+            reply_markup=kb.admin_menu(),
+        )
+        return
+    markup = InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(text="🛠 Admin panelni ochish", web_app=WebAppInfo(url=webapp_url)),
+        ]]
+    )
+    await message.answer(
+        "🛠 <b>Admin panel</b>\n\n"
+        "Tugmani bosing — interfeys ochiladi.\n"
+        "<i>Oddiy tugmali menyu: /menu</i>",
+        reply_markup=markup,
+    )
+
+
+@router.message(Command("menu"))
+async def cmd_menu(message: Message, state: FSMContext) -> None:
+    """Eski (tugmali) admin menyusi — zaxira variant."""
     await state.clear()
     await message.answer(
-        "🛠 <b>Admin panel</b>\n\nKerakli bo'limni tanlang:",
+        "🛠 <b>Admin menyu</b>\n\nKerakli bo'limni tanlang:",
         reply_markup=kb.admin_menu(),
     )
 
