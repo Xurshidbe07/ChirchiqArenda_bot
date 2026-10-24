@@ -21,6 +21,10 @@ router.callback_query.filter(IsAdmin())
 
 PER_PAGE = 8
 
+# Menyu tugmasi bosilganda u FSM javobi sifatida qabul qilinmasin —
+# pastdagi menyu handlerlariga o'tib ketsin (ular state ni tozalaydi).
+NOT_MENU = ~F.text.in_(kb.ADMIN_MENU_BUTTONS)
+
 
 # ====================================================================== MENU ===
 
@@ -68,21 +72,21 @@ async def add_house_start(message: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(AddHouse.title, F.text)
+@router.message(AddHouse.title, F.text, NOT_MENU)
 async def add_house_title(message: Message, state: FSMContext) -> None:
     await state.update_data(title=message.text.strip()[:120])
     await state.set_state(AddHouse.address)
     await message.answer("2/7. Manzilni kiriting:\n<i>Masalan: Chirchiq, Yoshlik mavzesi 12-uy</i>")
 
 
-@router.message(AddHouse.address, F.text)
+@router.message(AddHouse.address, F.text, NOT_MENU)
 async def add_house_address(message: Message, state: FSMContext) -> None:
     await state.update_data(address=message.text.strip()[:250])
     await state.set_state(AddHouse.rooms)
     await message.answer("3/7. Xonalar sonini kiriting (raqam):")
 
 
-@router.message(AddHouse.rooms, F.text)
+@router.message(AddHouse.rooms, F.text, NOT_MENU)
 async def add_house_rooms(message: Message, state: FSMContext) -> None:
     txt = message.text.strip()
     if not txt.isdigit() or not (1 <= int(txt) <= 50):
@@ -93,7 +97,7 @@ async def add_house_rooms(message: Message, state: FSMContext) -> None:
     await message.answer("4/7. Oylik narxni kiriting (so'mda, faqat raqam):\n<i>Masalan: 2500000</i>")
 
 
-@router.message(AddHouse.price, F.text)
+@router.message(AddHouse.price, F.text, NOT_MENU)
 async def add_house_price(message: Message, state: FSMContext) -> None:
     txt = message.text.replace(" ", "").replace(",", ".")
     try:
@@ -111,7 +115,7 @@ async def add_house_price(message: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(AddHouse.description, F.text)
+@router.message(AddHouse.description, F.text, NOT_MENU)
 async def add_house_description(message: Message, state: FSMContext) -> None:
     desc = "" if message.text == kb.BTN_SKIP else message.text.strip()[:1500]
     await state.update_data(description=desc)
@@ -122,7 +126,7 @@ async def add_house_description(message: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(AddHouse.contact_phone, F.text)
+@router.message(AddHouse.contact_phone, F.text, NOT_MENU)
 async def add_house_phone(message: Message, state: FSMContext) -> None:
     phone = None if message.text == kb.BTN_SKIP else message.text.strip()[:30]
     await state.update_data(contact_phone=phone)
@@ -145,7 +149,7 @@ async def add_house_photo_skip(message: Message, state: FSMContext) -> None:
     await _show_house_preview(message, state)
 
 
-@router.message(AddHouse.photo)
+@router.message(AddHouse.photo, NOT_MENU)
 async def add_house_photo_invalid(message: Message) -> None:
     await message.answer("❗️ Rasm yuboring yoki «O'tkazib yuborish» tugmasini bosing.")
 
@@ -339,7 +343,7 @@ async def block_start(message: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(BlockClient.waiting_id)
+@router.message(BlockClient.waiting_id, NOT_MENU)
 async def block_get_id(message: Message, state: FSMContext) -> None:
     tg_id = _extract_tg_id(message)
     if tg_id is None:
@@ -367,7 +371,7 @@ async def block_get_id(message: Message, state: FSMContext) -> None:
     )
 
 
-@router.message(BlockClient.waiting_reason, F.text)
+@router.message(BlockClient.waiting_reason, F.text, NOT_MENU)
 async def block_get_reason(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
     reason = None if message.text == kb.BTN_SKIP else message.text.strip()[:300]
@@ -410,7 +414,7 @@ async def blocked_page(call: CallbackQuery) -> None:
     await _render_blocked(call, int(arg))
 
 
-@router.message(UnblockClient.waiting_id)
+@router.message(UnblockClient.waiting_id, NOT_MENU)
 async def unblock_get_id(message: Message, state: FSMContext) -> None:
     tg_id = _extract_tg_id(message)
     if tg_id is None:

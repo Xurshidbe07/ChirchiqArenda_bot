@@ -24,6 +24,12 @@ BTN_EXIT = "⬅️ Admin paneldan chiqish"
 BTN_CANCEL = "❌ Bekor qilish"
 BTN_SKIP = "⏭ O'tkazib yuborish"
 
+# FSM holatida turganda ham menyu tugmalari ishlashi uchun
+ADMIN_MENU_BUTTONS = frozenset({
+    BTN_ADD_HOUSE, BTN_DEL_HOUSE, BTN_LIST_HOUSES, BTN_BLOCK,
+    BTN_UNBLOCK, BTN_CLIENTS, BTN_STATS, BTN_EXIT, BTN_CANCEL,
+})
+
 
 def admin_menu() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
