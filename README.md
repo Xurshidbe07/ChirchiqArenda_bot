@@ -36,9 +36,36 @@ Mini App ishlamasa zaxira variant — oddiy reply-klaviatura:
 
 Bloklangan klientga bot javob bermaydi (middleware darajasida to'xtatiladi).
 
-### Klient qismi
-`/start` → ro'yxatdan o'tadi, «🏠 Uylar» tugmasi orqali e'lonlarni varaqlaydi.
-Bu qism minimal — jamoa a'zolari `bot/handlers/user.py` da kengaytiradi.
+### Market Mini App (klientlar uchun, `/start` → «🏠 Uylar bozorini ochish»)
+OLX/Joymee uslubidagi ijara uylar bozori. Chat pastidagi «🏠 Uylar» menyu tugmasi ham shuni ochadi.
+
+- **Ro'yxatdan o'tish** (birinchi ochishda): ism, telefon (Telegram orqali ulashish yoki qo'lda), rol
+  (ijarachi / uy egasi). Ro'yxatdan o'tmagan klient e'lonlarni ko'rmaydi.
+- **Lenta**: 2 ustunli kartalar (rasm, narx, xona, mavze, manba belgisi), qidiruv, xona bo'yicha chiplar,
+  filtr (narx so'mda, mavze, manba), saralash (yangi / arzon / qimmat / ommabop), sahifalash.
+- **Tafsilot**: rasm galereyasi (surish), narx (y.e bo'lsa so'mga taxminiy kurs), parametrlar
+  (xona, maydon, qavat), tavsif, sotuvchi, «📞 Qo'ng'iroq», «Joymee'da ochish».
+- **Sevimlilar** va **Profil** (ma'lumotlarni o'zgartirish).
+
+Fayllar: `bot/webapp/static/market.html` (interfeys), `bot/webapp/server.py` (`/api/market/*`).
+
+### E'lonlar manbasi: Joymee scraper
+E'lonlar **Joymee.uz** dan avtomatik tortiladi (`bot/scrapers/joymee.py`) — saytning ochiq JSON API'si
+orqali (`api.joymee.uz/api/v1/announcement/?deal_type=2&district=166`), robots.txt ruxsat bergan.
+
+- Bot ishga tushganda va keyin har `SYNC_INTERVAL_MIN` daqiqada (`bot/sync.py`); admin paneldagi
+  «🔄 Joymee'dan yangilash» tugmasi bilan qo'lda ham.
+- Yangi e'lon → qo'shiladi; narxi/nomi o'zgargan → yangilanadi; Joymee'dan yo'qolgan → yashiriladi.
+- Admin yashirgan tashqi e'lon (`admin_hidden`) sinxda qayta ochilmaydi. Tashqi e'lonni o'chirish = yashirish.
+- `JOYMEE_DISTRICTS` — tumanlar (166 Chirchiq shahar; 150/156/147 — Yuqori/O'rta/Quyichirchiq),
+  `JOYMEE_CATEGORIES` — turkumlar (4 Kvartira, 5 Uy/dacha, 6 Tijorat, 7 Yer), `USD_RATE` — y.e kursi.
+
+> **OLX haqida.** OLX.uz barcha dastur so'rovlarini (hatto `robots.txt` ni ham) CloudFront bot-himoyasi
+> bilan bloklaydi, faqat brauzerdan ochiladi. Bot-himoyani aylanib o'tish qilinmaydi, shuning uchun OLX
+> e'lonlari avtomatik tortilmaydi. Variantlar: OLX'ning rasmiy hamkorlik API'si yoki admin panel orqali qo'lda qo'shish.
+
+### Matnli zaxira
+Mini App ishlamasa (`WEBAPP_URL` yo'q), «🏠 Uylar» tugmasi e'lonlarni chatda varaqlab beradi.
 
 ## O'rnatish
 
@@ -97,9 +124,14 @@ ChirchiqArendabot/
 │   ├── keyboards.py     # reply/inline klaviaturalar
 │   ├── states.py        # FSM holatlari
 │   ├── tunnel.py        # dev uchun cloudflared HTTPS tunnel
+│   ├── sync.py          # davriy sinxronlash (fon vazifasi)
+│   ├── scrapers/
+│   │   └── joymee.py    # Joymee.uz API dan e'lonlarni tortish
 │   ├── webapp/
-│   │   ├── server.py    # Mini App API (aiohttp)
-│   │   └── static/index.html  # Mini App interfeysi
+│   │   ├── server.py    # Mini App API (aiohttp): admin + market
+│   │   └── static/
+│   │       ├── index.html   # admin Mini App
+│   │       └── market.html  # klient Mini App (uylar bozori)
 │   └── handlers/
 │       ├── admin.py     # /admin (Mini App), /menu (tugmali), admin handlerlar
 │       └── user.py      # klient qismi
@@ -111,8 +143,12 @@ ChirchiqArendabot/
 
 ## Ma'lumotlar bazasi
 
-- `users` — klientlar: `telegram_id`, `full_name`, `username`, `phone`, `is_blocked`, `block_reason`
-- `houses` — e'lonlar: `title`, `address`, `rooms`, `price`, `description`, `photo_file_id`, `contact_phone`, `is_active`
+- `users` — klientlar: `telegram_id`, `full_name`, `username`, `phone`, `role`, `registered_at`, `is_blocked`, `block_reason`
+- `houses` — e'lonlar: `title`, `address`, `district`, `rooms`, `area`, `floor`, `price`, `currency`, `price_uzs`,
+  `description`, `photo_urls` (tashqi URL yoki `tg:FILE_ID`), `contact_phone`, `source` (admin/joymee),
+  `source_id`, `source_url`, `seller_*`, `views`, `is_active`, `admin_hidden`, `last_seen_at`
+- `favorites` — klient sevimlilari
+- `sync_log` — sinxronlash jurnali
 
 ## Jamoa uchun
 

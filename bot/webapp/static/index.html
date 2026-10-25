@@ -97,6 +97,12 @@
       <span class="chip active" data-f="all">Hammasi</span>
       <span class="chip" data-f="active">Faol</span>
       <span class="chip" data-f="hidden">Yashirilgan</span>
+      <span class="chip" data-f="joymee">Joymee</span>
+      <span class="chip" data-f="admin">Bizniki</span>
+    </div>
+    <div class="actions" style="margin:0 0 10px">
+      <button class="primary" id="sync">🔄 Joymee'dan yangilash</button>
+      <span id="sync-info" style="font-size:12px;color:var(--hint);align-self:center"></span>
     </div>
     <div id="houses-list"></div>
   </section>
@@ -129,13 +135,14 @@
     <form id="house-form">
       <label>Nomi *</label><input name="title" required maxlength="120" placeholder="2 xonali, markazda">
       <label>Manzil *</label><input name="address" required maxlength="250" placeholder="Chirchiq, Yoshlik mavzesi 12-uy">
+      <label>Mavze / tuman</label><input name="district" maxlength="80" placeholder="Yoshlik mavzesi">
       <div class="row">
         <div><label>Xonalar *</label><input name="rooms" type="number" min="1" max="50" required placeholder="2"></div>
         <div><label>Narx (so'm/oy) *</label><input name="price" type="number" min="0" step="1000" required placeholder="2500000"></div>
       </div>
       <label>Telefon</label><input name="contact_phone" maxlength="30" placeholder="+998901234567">
       <label>Tavsif</label><textarea name="description" maxlength="1500" placeholder="Remont, mebel, qavat..."></textarea>
-      <label>Rasm</label><input name="photo" type="file" accept="image/*">
+      <label>Rasmlar (8 tagacha)</label><input name="photos" type="file" accept="image/*" multiple>
       <div class="actions">
         <button type="button" id="cancel">Bekor qilish</button>
         <button type="submit" class="primary" id="save">Saqlash</button>
@@ -176,7 +183,9 @@
     if (!r.ok) throw new Error((await r.text()) || ("HTTP " + r.status));
     return r.status === 204 ? null : r.json();
   }
-  const photoUrl = (id) => "/api/photo/" + encodeURIComponent(id) + "?_auth=" + encodeURIComponent(initData);
+  const photoUrl = (u) => u.startsWith("/api/photo/") ? u + "?_auth=" + encodeURIComponent(initData) : u;
+  const priceStr = (h) => (h.currency === "USD" ? money(h.price) + " y.e" : money(h.price) + " so'm");
+  const srcName = (s) => (s === "joymee" ? "Joymee" : "Bizniki");
 
   // ---------- gate ----------
   if (!initData) {
@@ -202,23 +211,37 @@
   }));
 
   async function loadHouses() {
-    try { houses = await api("/api/houses"); renderHouses(); }
+    try { houses = await api("/api/houses"); renderHouses(); loadSyncInfo(); }
     catch (e) { $("#houses-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
+  async function loadSyncInfo() {
+    try {
+      const s = await api("/api/stats"); const ls = s.last_sync;
+      $("#sync-info").textContent = ls ? `Oxirgi: ${new Date(ls.finished_at || ls.started_at).toLocaleString("uz")} · ${ls.seen} ta` + (ls.error ? " · xato" : "") : "Hali sinxronlanmagan";
+    } catch (e) {}
+  }
+  $("#sync").addEventListener("click", async () => {
+    const b = $("#sync"); b.disabled = true; b.textContent = "⏳ Yangilanmoqda…";
+    try { const r = await api("/api/sync", { method: "POST" }); haptic("success"); toast(`Yangi ${r.added}, yangilandi ${r.updated}, yopildi ${r.deactivated}`); await loadHouses(); }
+    catch (e) { haptic("error"); toast(e.message); }
+    finally { b.disabled = false; b.textContent = "🔄 Joymee'dan yangilash"; }
+  });
   function renderHouses() {
-    const list = houses.filter((h) => houseFilter === "all" || (houseFilter === "active" ? h.is_active : !h.is_active));
+    const list = houses.filter((h) => houseFilter === "all" || (houseFilter === "active" ? h.is_active : houseFilter === "hidden" ? !h.is_active : h.source === houseFilter));
     if (!list.length) { $("#houses-list").innerHTML = `<div class="empty">Uylar yo'q</div>`; return; }
     $("#houses-list").innerHTML = list.map((h) => `
       <div class="card" data-id="${h.id}">
-        ${h.photo_file_id ? `<img class="thumb" loading="lazy" src="${photoUrl(h.photo_file_id)}" alt="">` : `<div class="thumb">🏠</div>`}
+        ${h.photos[0] ? `<img class="thumb" loading="lazy" src="${photoUrl(h.photos[0])}" alt="">` : `<div class="thumb">🏠</div>`}
         <div class="body">
           <div class="title">#${h.id} ${esc(h.title)}
-            <span class="badge ${h.is_active ? "ok" : "off"}">${h.is_active ? "faol" : "yashirin"}</span></div>
-          <div class="meta">📍 ${esc(h.address)} · 🚪 ${h.rooms} xona${h.contact_phone ? " · 📞 " + esc(h.contact_phone) : ""}</div>
-          <div class="price">${money(h.price)} so'm / oy</div>
+            <span class="badge ${h.is_active ? "ok" : "off"}">${h.is_active ? "faol" : "yashirin"}</span>
+            <span class="badge" style="background:${h.source === "joymee" ? "#5b3df5" : "var(--warn)"}">${srcName(h.source)}</span></div>
+          <div class="meta">📍 ${esc(h.district || h.address)}${h.rooms ? " · 🚪 " + h.rooms + " xona" : ""}${h.contact_phone ? " · 📞 " + esc(h.contact_phone) : ""}</div>
+          <div class="price">${priceStr(h)} / oy${h.views ? ` <span style="color:var(--hint);font-weight:400;font-size:12px">· 👁 ${h.views}</span>` : ""}</div>
           <div class="actions">
             <button data-act="toggle">${h.is_active ? "🙈 Yashirish" : "👁 Ko'rsatish"}</button>
-            <button class="danger" data-act="del">🗑 O'chirish</button>
+            ${h.source_url ? `<button data-act="src">↗ ${srcName(h.source)}</button>` : ""}
+            ${h.source === "admin" ? `<button class="danger" data-act="del">🗑 O'chirish</button>` : ""}
           </div>
         </div>
       </div>`).join("");
@@ -226,6 +249,7 @@
   $("#houses-list").addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-act]"); if (!btn) return;
     const id = +btn.closest(".card").dataset.id; const h = houses.find((x) => x.id === id);
+    if (btn.dataset.act === "src") { if (inTelegram && tg.openLink) tg.openLink(h.source_url); else window.open(h.source_url, "_blank"); return; }
     btn.disabled = true;
     try {
       if (btn.dataset.act === "del") {
@@ -314,10 +338,14 @@
   async function loadStats() {
     try {
       const s = await api("/api/stats");
+      const ls = s.last_sync;
       $("#stats-grid").innerHTML = [
-        ["👥 Klientlar", s.users_total], ["🚫 Bloklangan", s.users_blocked],
-        ["🏠 Uylar", s.houses_total], ["🟢 Faol uylar", s.houses_active],
-      ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+        ["👥 Klientlar", s.users_total], ["✅ Ro'yxatdan o'tgan", s.users_registered],
+        ["🚫 Bloklangan", s.users_blocked], ["❤️ Sevimlilar", s.favorites_total],
+        ["🏠 Jami e'lonlar", s.houses_total], ["🟢 Faol", s.houses_active],
+        ["🟣 Joymee", s.houses_joymee], ["🟠 Bizniki", s.houses_admin],
+      ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")
+      + `<div class="stat" style="grid-column:1/-1"><div class="l">Oxirgi sinxronlash</div><div style="font-size:13px;margin-top:4px">${ls ? `${new Date(ls.finished_at || ls.started_at).toLocaleString("uz")} — ko'rildi ${ls.seen}, yangi ${ls.added}, yangilandi ${ls.updated}, yopildi ${ls.deactivated}${ls.error ? `<br><span style="color:var(--danger)">Xato: ${esc(ls.error)}</span>` : ""}` : "hali yo'q"}<br>Avtomatik: ${s.sync_interval_min ? "har " + s.sync_interval_min + " daqiqada" : "o'chiq"}</div></div>`;
     } catch (e) { $("#stats-grid").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
 

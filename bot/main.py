@@ -14,7 +14,7 @@ from aiogram.types import (
     WebAppInfo,
 )
 
-from bot import db, tunnel
+from bot import db, sync, tunnel
 from bot.config import config
 from bot.handlers import admin, user
 from bot.middlewares import UserMiddleware
@@ -29,6 +29,18 @@ log = logging.getLogger("chirchiq_arenda")
 
 async def set_commands(bot: Bot, webapp_url: str) -> None:
     await bot.set_my_commands([BotCommand(command="start", description="Botni ishga tushirish")])
+
+    # Hamma uchun chat pastidagi "Menu" tugmasi -> uylar bozori (Mini App)
+    try:
+        if webapp_url:
+            await bot.set_chat_menu_button(
+                menu_button=MenuButtonWebApp(text="🏠 Uylar", web_app=WebAppInfo(url=webapp_url + "/market"))
+            )
+        else:
+            await bot.set_chat_menu_button(menu_button=MenuButtonDefault())
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Umumiy menyu tugmasi o'rnatilmadi: %s", exc)
+
     admin_cmds = [
         BotCommand(command="start", description="Botni ishga tushirish"),
         BotCommand(command="admin", description="Admin panel (Mini App)"),
@@ -37,14 +49,11 @@ async def set_commands(bot: Bot, webapp_url: str) -> None:
     for admin_id in config.admin_ids:
         try:
             await bot.set_my_commands(admin_cmds, scope=BotCommandScopeChat(chat_id=admin_id))
-            # Chat pastidagi "Menu" tugmasi ham Mini App'ni ochsin
             if webapp_url:
                 await bot.set_chat_menu_button(
                     chat_id=admin_id,
                     menu_button=MenuButtonWebApp(text="Admin", web_app=WebAppInfo(url=webapp_url)),
                 )
-            else:
-                await bot.set_chat_menu_button(chat_id=admin_id, menu_button=MenuButtonDefault())
         except Exception as exc:  # admin hali botga yozmagan bo'lishi mumkin
             log.warning("Admin %s uchun komandalar o'rnatilmadi: %s", admin_id, exc)
 
@@ -58,9 +67,9 @@ async def resolve_webapp_url() -> str:
         url = await tunnel.start(config.webapp_port)
         if url:
             return url
-        log.warning("Tunnel ochilmadi; /admin oddiy menyuga o'tadi.")
+        log.warning("Tunnel ochilmadi; Mini App tugmalari ko'rinmaydi.")
     else:
-        log.warning("WEBAPP_URL yo'q va cloudflared topilmadi; /admin oddiy menyuga o'tadi.")
+        log.warning("WEBAPP_URL yo'q va cloudflared topilmadi; Mini App tugmalari ko'rinmaydi.")
     return ""
 
 
@@ -71,28 +80,28 @@ async def main() -> None:
     bot = Bot(token=config.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=MemoryStorage())
 
-    # Middleware: ro'yxatga olish + bloklanganlarni to'xtatish
     dp.message.outer_middleware(UserMiddleware())
     dp.callback_query.outer_middleware(UserMiddleware())
 
-    # Admin router birinchi — admin tugmalari user routerdan oldin ushlansin
     dp.include_router(admin.router)
     dp.include_router(user.router)
 
-    # Mini App serveri + tashqi HTTPS manzil
     runner = await start_server(bot)
     webapp_url = await resolve_webapp_url()
     dp["webapp_url"] = webapp_url  # handlerlarga `webapp_url` argumenti sifatida keladi
     if webapp_url:
         log.info("Admin Mini App: %s", webapp_url)
+        log.info("Market Mini App: %s/market", webapp_url)
 
     await set_commands(bot, webapp_url)
+    sync.start_background()
     log.info("Bot ishga tushdi. Adminlar: %s", sorted(config.admin_ids))
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     finally:
+        await sync.stop_background()
         await runner.cleanup()
         await tunnel.stop()
         await db.close_db()

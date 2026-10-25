@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chirchiq Arenda</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --bg2: var(--tg-theme-secondary-bg-color, #f2f3f5);
+    --text: var(--tg-theme-text-color, #111111);
+    --hint: var(--tg-theme-hint-color, #8a8f98);
+    --link: var(--tg-theme-link-color, #2481cc);
+    --btn: var(--tg-theme-button-color, #2481cc);
+    --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --accent: #ff6f1f;
+    --ok: #30a46c; --danger: #e5484d;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg2); color: var(--text);
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .hidden { display: none !important; }
+  button { border: 0; border-radius: 10px; padding: 9px 13px; font: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; background: var(--bg2); color: var(--text); }
+  button.primary { background: var(--btn); color: var(--btn-text); }
+  button.accent { background: var(--accent); color: #fff; }
+  button.ghost { background: transparent; color: var(--link); }
+  button:disabled { opacity: .5; }
+  input, select, textarea { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,.08);
+    background: var(--card); color: var(--text); font: inherit; outline: none; }
+  label { display: block; font-size: 13px; color: var(--hint); margin: 10px 0 4px; }
+  .center { text-align: center; color: var(--hint); padding: 40px 16px; }
+
+  /* header */
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 10px 14px 8px; box-shadow: 0 1px 0 rgba(0,0,0,.06); }
+  .brand { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .brand h1 { margin: 0; font-size: 18px; } .brand h1 span { color: var(--accent); }
+  .brand small { color: var(--hint); font-size: 12px; }
+  .searchrow { display: flex; gap: 8px; }
+  .searchrow input { flex: 1; background: var(--bg2); border: 0; }
+  .searchrow button { padding: 0 14px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 0; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--bg2); color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .chip.active { background: var(--btn); color: var(--btn-text); }
+
+  /* grid */
+  main { padding: 10px 12px; }
+  .count { color: var(--hint); font-size: 13px; margin: 2px 2px 8px; display: flex; justify-content: space-between; align-items: center; }
+  .count select { width: auto; padding: 4px 8px; font-size: 13px; border: 0; background: transparent; color: var(--link); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .item { background: var(--card); border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; display: flex; flex-direction: column; }
+  .item .img { aspect-ratio: 4/3; background: var(--bg2) center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 34px; }
+  .item .fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.9); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .item .src { position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: rgba(0,0,0,.55); color: #fff; text-transform: uppercase; letter-spacing: .3px; }
+  .item .src.joymee { background: #5b3df5; } .item .src.admin { background: var(--accent); }
+  .item .b { padding: 8px 10px 10px; }
+  .item .price { font-weight: 700; font-size: 15px; }
+  .item .price small { color: var(--hint); font-weight: 500; font-size: 11px; }
+  .item .t { font-size: 13px; margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 36px; }
+  .item .m { color: var(--hint); font-size: 12px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .more { width: 100%; margin-top: 12px; padding: 12px; }
+
+  /* bottom nav */
+  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; background: var(--bg); box-shadow: 0 -1px 0 rgba(0,0,0,.08);
+    padding-bottom: env(safe-area-inset-bottom); }
+  nav div { flex: 1; text-align: center; padding: 8px 0 6px; font-size: 11px; color: var(--hint); cursor: pointer; }
+  nav div b { display: block; font-size: 20px; font-weight: 400; }
+  nav div.active { color: var(--link); }
+
+  /* sheet / detail */
+  .sheet { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow: auto; display: flex; flex-direction: column; }
+  .gallery { position: relative; background: #000; }
+  .gallery .track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .gallery .track::-webkit-scrollbar { display: none; }
+  .gallery img { width: 100%; flex: none; aspect-ratio: 4/3; object-fit: contain; scroll-snap-align: start; background: #000; }
+  .gallery .dots { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 12px; color: #fff; text-shadow: 0 0 4px #000; }
+  .gallery .back { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.5); color: #fff; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .gallery .favbtn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,.92); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .d { padding: 14px 16px 120px; }
+  .d .price { font-size: 24px; font-weight: 800; } .d .price small { font-size: 13px; color: var(--hint); font-weight: 500; }
+  .d h2 { margin: 6px 0 4px; font-size: 17px; }
+  .d .meta { color: var(--hint); font-size: 13px; }
+  .params { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin: 14px 0; }
+  .params div { background: var(--bg2); border-radius: 10px; padding: 8px 10px; }
+  .params div small { display: block; color: var(--hint); font-size: 11px; }
+  .params div b { font-size: 14px; }
+  .desc { white-space: pre-wrap; line-height: 1.5; font-size: 14px; }
+  .seller { display: flex; align-items: center; gap: 10px; background: var(--bg2); border-radius: 12px; padding: 10px 12px; margin-top: 14px; }
+  .seller .av { width: 38px; height: 38px; border-radius: 50%; background: var(--card); display: flex; align-items: center; justify-content: center; }
+  .seller .n { font-weight: 600; font-size: 14px; } .seller .u { color: var(--hint); font-size: 12px; }
+  .cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--bg); padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; box-shadow: 0 -1px 0 rgba(0,0,0,.08); }
+  .cta button { flex: 1; padding: 13px; font-size: 15px; }
+  .srcline { margin-top: 12px; font-size: 12px; color: var(--hint); }
+  .srcline a { color: var(--link); }
+
+  /* registration */
+  .reg { padding: 24px 18px; max-width: 480px; margin: 0 auto; }
+  .reg h2 { margin: 0 0 4px; } .reg p { color: var(--hint); margin: 0 0 14px; font-size: 14px; }
+  .roles { display: flex; gap: 8px; } .roles div { flex: 1; border: 2px solid transparent; background: var(--card); border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; }
+  .roles div.active { border-color: var(--btn); } .roles div b { display: block; font-size: 22px; }
+  .reg .actions { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; } .reg .actions button { padding: 13px; font-size: 15px; }
+  .err { color: var(--danger); font-size: 13px; margin-top: 8px; min-height: 18px; }
+
+  /* filters sheet */
+  .fsheet { position: fixed; inset: 0; z-index: 35; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; }
+  .fbody { background: var(--bg); width: 100%; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .fbody h3 { margin: 0 0 6px; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+  .fbody .actions { display: flex; gap: 8px; margin-top: 16px; } .fbody .actions button { flex: 1; padding: 12px; }
+
+  /* profile */
+  .prof { padding: 16px; } .prof .card { background: var(--card); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .prof .card .k { color: var(--hint); font-size: 12px; } .prof .card .v { font-weight: 600; }
+
+  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 60; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+
+<!-- ======== registratsiya ======== -->
+<section id="reg" class="reg hidden">
+  <h2>👋 Xush kelibsiz!</h2>
+  <p>Chirchiq bo'yicha ijara uylarini ko'rish uchun qisqa ro'yxatdan o'ting.</p>
+  <label>Ismingiz</label>
+  <input id="r-name" maxlength="100" placeholder="Ism Familiya">
+  <label>Kimsiz?</label>
+  <div class="roles">
+    <div data-role="tenant" class="active"><b>🔑</b>Ijarachi<br><small style="color:var(--hint)">uy qidiryapman</small></div>
+    <div data-role="landlord"><b>🏠</b>Uy egasi<br><small style="color:var(--hint)">uyim bor</small></div>
+  </div>
+  <label>Telefon raqam</label>
+  <input id="r-phone" inputmode="tel" placeholder="+998 90 123 45 67">
+  <div class="err" id="r-err"></div>
+  <div class="actions">
+    <button class="primary" id="r-contact">📱 Telegram raqamimni ulashish</button>
+    <button id="r-submit">Davom etish</button>
+  </div>
+</section>
+
+<!-- ======== asosiy ======== -->
+<div id="app" class="hidden">
+<header>
+  <div class="brand">
+    <h1>Chirchiq <span>Arenda</span></h1>
+    <small id="who"></small>
+  </div>
+  <div class="searchrow" id="searchrow">
+    <input id="q" placeholder="Qidirish: mavze, xona, narx...">
+    <button id="fbtn">⚙️ Filtr</button>
+  </div>
+  <div class="chips" id="roomchips">
+    <span class="chip active" data-rooms="">Hammasi</span>
+    <span class="chip" data-rooms="1">1 xona</span>
+    <span class="chip" data-rooms="2">2 xona</span>
+    <span class="chip" data-rooms="3">3 xona</span>
+    <span class="chip" data-rooms="4">4+ xona</span>
+  </div>
+</header>
+
+<main>
+  <section id="page-feed">
+    <div class="count"><span id="cnt"></span>
+      <select id="sort">
+        <option value="new">Eng yangi</option>
+        <option value="cheap">Arzon → qimmat</option>
+        <option value="expensive">Qimmat → arzon</option>
+        <option value="popular">Ommabop</option>
+      </select></div>
+    <div class="grid" id="grid"></div>
+    <button class="more hidden" id="more">Yana ko'rsatish</button>
+  </section>
+  <section id="page-fav" class="hidden">
+    <div class="count"><span>❤️ Sevimlilar</span></div>
+    <div class="grid" id="favgrid"></div>
+  </section>
+  <section id="page-prof" class="hidden prof"></section>
+</main>
+
+<nav>
+  <div class="active" data-page="feed"><b>🏠</b>Uylar</div>
+  <div data-page="fav"><b>❤️</b>Sevimlilar</div>
+  <div data-page="prof"><b>👤</b>Profil</div>
+</nav>
+</div>
+
+<div id="gate" class="center hidden">⚠️ Bu sahifa faqat Telegram ichida ochiladi.<div id="gate-msg" style="margin-top:8px;font-size:13px"></div></div>
+<div id="detail" class="sheet hidden"></div>
+<div id="fsheet" class="fsheet hidden">
+  <div class="fbody">
+    <h3>Filtrlar</h3>
+    <label>Narx (so'm / oy)</label>
+    <div class="row"><input id="f-min" inputmode="numeric" placeholder="dan"><input id="f-max" inputmode="numeric" placeholder="gacha"></div>
+    <label>Mavze / tuman</label>
+    <select id="f-district"><option value="">Hammasi</option></select>
+    <label>Manba</label>
+    <select id="f-source"><option value="">Hammasi</option><option value="joymee">Joymee</option><option value="admin">Bizning e'lonlar</option></select>
+    <div class="actions"><button id="f-reset">Tozalash</button><button class="primary" id="f-apply">Ko'rsatish</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const initData = tg ? tg.initData : "";
+  if (tg) { tg.ready(); tg.expand(); }
+  const inTelegram = !!(tg && tg.platform && tg.platform !== "unknown" && tg.initDataUnsafe && tg.initDataUnsafe.query_id);
+
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const money = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const priceStr = (h) => h.currency === "USD" ? `${money(h.price)} y.e` : `${money(h.price)} so'm`;
+  const uzsStr = (h) => h.currency === "USD" && h.price_uzs ? `≈ ${money(h.price_uzs)} so'm` : "";
+  const srcName = (s) => s === "joymee" ? "Joymee" : "Bizniki";
+  const ago = (iso) => { const d = (Date.now() - new Date(iso)) / 36e5; if (d < 1) return "hozirgina"; if (d < 24) return `${Math.floor(d)} soat oldin`; const days = Math.floor(d / 24); return days === 1 ? "kecha" : `${days} kun oldin`; };
+  let toastTimer; function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200); }
+  const haptic = (t) => { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(t); } catch (e) {} };
+  const photo = (u) => u.startsWith("/api/photo/") ? u + "?_auth=" + encodeURIComponent(initData) : u;
+
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ Authorization: "tma " + initData }, opts.headers || {});
+    const r = await fetch(path, Object.assign({}, opts, { headers }));
+    if (!r.ok) { const e = new Error((await r.text()) || "HTTP " + r.status); e.status = r.status; throw e; }
+    return r.json();
+  }
+
+  if (!initData) { $("#gate").classList.remove("hidden"); return; }
+
+  // ================= registratsiya =================
+  let me = null, role = "tenant";
+  document.querySelectorAll(".roles div").forEach((d) => d.addEventListener("click", () => {
+    document.querySelectorAll(".roles div").forEach((x) => x.classList.toggle("active", x === d)); role = d.dataset.role;
+  }));
+  async function register(payload) {
+    $("#r-err").textContent = "";
+    const name = $("#r-name").value.trim();
+    if (name.length < 2) { $("#r-err").textContent = "Ismingizni kiriting."; return; }
+    try {
+      me = await api("/api/market/register", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.assign({ full_name: name, role }, payload)) });
+      haptic("success"); showApp();
+    } catch (e) { haptic("error"); $("#r-err").textContent = e.message; }
+  }
+  $("#r-submit").addEventListener("click", () => register({ phone: $("#r-phone").value }));
+  $("#r-contact").addEventListener("click", () => {
+    if (!(inTelegram && tg.requestContact)) { $("#r-err").textContent = "Telegram ichida ishlaydi. Raqamni qo'lda kiriting."; return; }
+    tg.requestContact((ok, resp) => {
+      if (!ok) { $("#r-err").textContent = "Raqam ulashilmadi."; return; }
+      register({ contact_response: resp && resp.response });
+    });
+  });
+  if (!inTelegram) $("#r-contact").classList.add("hidden");
+
+  // ================= asosiy =================
+  const state = { q: "", rooms: "", min: "", max: "", district: "", source: "", sort: "new", page: 0, items: [], favs: [] };
+
+  function showApp() {
+    $("#reg").classList.add("hidden"); $("#app").classList.remove("hidden");
+    $("#who").textContent = me.full_name || "";
+    loadDistricts(); loadFeed(true);
+  }
+
+  // tabs
+  document.querySelectorAll("nav div").forEach((t) => t.addEventListener("click", () => {
+    document.querySelectorAll("nav div").forEach((x) => x.classList.toggle("active", x === t));
+    const p = t.dataset.page;
+    $("#page-feed").classList.toggle("hidden", p !== "feed"); $("#page-fav").classList.toggle("hidden", p !== "fav"); $("#page-prof").classList.toggle("hidden", p !== "prof");
+    $("header").classList.toggle("hidden", p !== "feed");
+    if (p === "fav") loadFavs(); if (p === "prof") renderProfile();
+  }));
+
+  // search / chips / sort
+  let qTimer; $("#q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = $("#q").value; loadFeed(true); }, 350); });
+  document.querySelectorAll("#roomchips .chip").forEach((c) => c.addEventListener("click", () => {
+    document.querySelectorAll("#roomchips .chip").forEach((x) => x.classList.toggle("active", x === c)); state.rooms = c.dataset.rooms; loadFeed(true);
+  }));
+  $("#sort").addEventListener("change", () => { state.sort = $("#sort").value; loadFeed(true); });
+  $("#more").addEventListener("click", () => loadFeed(false));
+
+  // filters sheet
+  $("#fbtn").addEventListener("click", () => $("#fsheet").classList.remove("hidden"));
+  $("#fsheet").addEventListener("click", (e) => { if (e.target === $("#fsheet")) $("#fsheet").classList.add("hidden"); });
+  $("#f-apply").addEventListener("click", () => {
+    state.min = $("#f-min").value.replace(/\D/g, ""); state.max = $("#f-max").value.replace(/\D/g, "");
+    state.district = $("#f-district").value; state.source = $("#f-source").value;
+    $("#fsheet").classList.add("hidden"); $("#fbtn").textContent = (state.min || state.max || state.district || state.source) ? "⚙️ Filtr •" : "⚙️ Filtr"; loadFeed(true);
+  });
+  $("#f-reset").addEventListener("click", () => { ["#f-min", "#f-max"].forEach((s) => $(s).value = ""); $("#f-district").value = ""; $("#f-source").value = ""; $("#f-apply").click(); });
+  async function loadDistricts() {
+    try { const ds = await api("/api/market/districts"); $("#f-district").innerHTML = `<option value="">Hammasi</option>` + ds.map((d) => `<option>${esc(d)}</option>`).join(""); } catch (e) {}
+  }
+
+  // feed
+  async function loadFeed(reset) {
+    if (reset) { state.page = 0; state.items = []; $("#grid").innerHTML = `<div class="center" style="grid-column:1/-1">Yuklanmoqda…</div>`; }
+    const p = new URLSearchParams({ q: state.q, rooms: state.rooms, price_min: state.min, price_max: state.max, district: state.district, source: state.source, sort: state.sort, page: state.page });
+    try {
+      const r = await api("/api/market/houses?" + p);
+      state.items = state.items.concat(r.items); state.page++;
+      $("#more").classList.toggle("hidden", !r.has_more);
+      renderGrid($("#grid"), state.items);
+      $("#cnt").textContent = state.items.length ? `${state.items.length}${r.has_more ? "+" : ""} ta e'lon` : "";
+    } catch (e) { $("#grid").innerHTML = `<div class="center" style="grid-column:1/-1">${esc(e.message)}</div>`; }
+  }
+  function card(h) {
+    return `<div class="item" data-id="${h.id}">
+      <div class="img" style="${h.photos[0] ? `background-image:url('${photo(h.photos[0])}')` : ""}">${h.photos[0] ? "" : "🏠"}</div>
+      <span class="src ${h.source}">${srcName(h.source)}</span>
+      <span class="fav" data-fav="${h.id}">${h.is_favorite ? "❤️" : "🤍"}</span>
+      <div class="b">
+        <div class="price">${priceStr(h)} <small>/ oy</small></div>
+        <div class="t">${esc(h.title)}</div>
+        <div class="m">${h.rooms ? h.rooms + " xona · " : ""}${h.area ? h.area + " m² · " : ""}${esc(h.district || h.address)}</div>
+        <div class="m">${ago(h.published_at)}${h.views ? " · 👁 " + h.views : ""}</div>
+      </div></div>`;
+  }
+  function renderGrid(el, items) {
+    el.innerHTML = items.length ? items.map(card).join("") : `<div class="center" style="grid-column:1/-1">E'lonlar topilmadi</div>`;
+  }
+  document.addEventListener("click", async (e) => {
+    const f = e.target.closest("[data-fav]");
+    if (f) { e.stopPropagation(); await toggleFav(+f.dataset.fav); return; }
+    const it = e.target.closest(".item"); if (it) openDetail(+it.dataset.id);
+  });
+  async function toggleFav(id) {
+    try {
+      const r = await api("/api/market/favorites/" + id, { method: "POST" });
+      [state.items, state.favs].forEach((arr) => { const h = arr.find((x) => x.id === id); if (h) h.is_favorite = r.is_favorite; });
+      if (!r.is_favorite) state.favs = state.favs.filter((x) => x.id !== id);
+      document.querySelectorAll(`[data-fav="${id}"]`).forEach((el) => el.textContent = r.is_favorite ? "❤️" : "🤍");
+      haptic("success"); toast(r.is_favorite ? "Sevimlilarga qo'shildi" : "Sevimlilardan olindi");
+      if (!$("#page-fav").classList.contains("hidden")) renderGrid($("#favgrid"), state.favs);
+    } catch (err) { toast(err.message); }
+  }
+  async function loadFavs() {
+    try { state.favs = await api("/api/market/favorites"); renderGrid($("#favgrid"), state.favs); }
+    catch (e) { $("#favgrid").innerHTML = `<div class="center" style="grid-column:1/-1">${esc(e.message)}</div>`; }
+  }
+
+  // detail
+  async function openDetail(id) {
+    const el = $("#detail"); el.innerHTML = `<div class="center">Yuklanmoqda…</div>`; el.classList.remove("hidden");
+    if (inTelegram && tg.BackButton) { tg.BackButton.show(); tg.BackButton.onClick(closeDetail); }
+    let h; try { h = await api("/api/market/houses/" + id); } catch (e) { el.innerHTML = `<div class="center">${esc(e.message)}<br><br><button id="dclose">Yopish</button></div>`; $("#dclose").onclick = closeDetail; return; }
+    const imgs = h.photos.length ? h.photos.map((p) => `<img src="${photo(p)}" loading="lazy" alt="">`).join("") : `<div class="img" style="width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:60px;color:#fff">🏠</div>`;
+    const params = [
+      h.rooms ? ["Xonalar", h.rooms] : null, h.area ? ["Maydon", h.area + " m²"] : null,
+      h.floor ? ["Qavat", h.floor + (h.floors ? "/" + h.floors : "")] : null, h.district ? ["Mavze", h.district] : null,
+    ].filter(Boolean).map(([k, v]) => `<div><small>${k}</small><b>${esc(v)}</b></div>`).join("");
+    const tel = h.contact_phone ? h.contact_phone.replace(/[^\d+]/g, "") : "";
+    el.innerHTML = `
+      <div class="gallery">
+        <div class="track" id="track">${imgs}</div>
+        <div class="back" id="dback">‹</div>
+        <div class="favbtn" data-fav="${h.id}">${h.is_favorite ? "❤️" : "🤍"}</div>
+        ${h.photos.length > 1 ? `<div class="dots" id="dots">1 / ${h.photos.length}</div>` : ""}
+      </div>
+      <div class="d">
+        <div class="price">${priceStr(h)} <small>/ oy ${uzsStr(h)}</small></div>
+        <h2>${esc(h.title)}</h2>
+        <div class="meta">📍 ${esc(h.address)} · ${ago(h.published_at)} · 👁 ${h.views}</div>
+        ${params ? `<div class="params">${params}</div>` : ""}
+        <div class="desc">${esc(h.description || "Tavsif yo'q.")}</div>
+        ${h.seller_name || h.seller_username ? `<div class="seller"><div class="av">👤</div><div><div class="n">${esc(h.seller_name || h.seller_username)}</div><div class="u">${h.seller_username ? "@" + esc(h.seller_username) + " · " : ""}${srcName(h.source)} orqali</div></div></div>` : ""}
+        <div class="srcline">Manba: ${srcName(h.source)}${h.source_url ? ` · <a href="#" id="srclink">asl e'lonni ochish ↗</a>` : ""}</div>
+      </div>
+      <div class="cta">
+        ${tel ? `<button class="accent" id="call">📞 Qo'ng'iroq</button>` : ""}
+        ${h.source_url ? `<button class="primary" id="open">${srcName(h.source)}'da ochish</button>` : ""}
+      </div>`;
+    $("#dback").onclick = closeDetail;
+    const track = $("#track"); if (track && $("#dots")) track.addEventListener("scroll", () => { const i = Math.round(track.scrollLeft / track.clientWidth) + 1; $("#dots").textContent = `${i} / ${h.photos.length}`; });
+    const openSrc = (ev) => { ev.preventDefault(); if (inTelegram && tg.openLink) tg.openLink(h.source_url); else window.open(h.source_url, "_blank"); };
+    if ($("#open")) $("#open").onclick = openSrc; if ($("#srclink")) $("#srclink").onclick = openSrc;
+    if ($("#call")) $("#call").onclick = () => { location.href = "tel:" + tel; };
+  }
+  function closeDetail() { $("#detail").classList.add("hidden"); if (inTelegram && tg.BackButton) { tg.BackButton.hide(); tg.BackButton.offClick(closeDetail); } }
+
+  // profile
+  function renderProfile() {
+    $("#page-prof").innerHTML = `
+      <div class="card"><div class="k">Ism</div><div class="v">${esc(me.full_name)}</div></div>
+      <div class="card"><div class="k">Telefon</div><div class="v">${esc(me.phone || "—")}</div></div>
+      <div class="card"><div class="k">Rol</div><div class="v">${me.role === "landlord" ? "🏠 Uy egasi" : "🔑 Ijarachi"}</div></div>
+      <div class="card"><div class="k">Telegram</div><div class="v">${me.username ? "@" + esc(me.username) : "ID " + me.telegram_id}</div></div>
+      <button class="primary" id="edit" style="width:100%;padding:12px">✏️ Ma'lumotlarni o'zgartirish</button>
+      <p style="color:var(--hint);font-size:12px;margin-top:14px">E'lonlar Joymee.uz dan avtomatik yig'iladi va har ${esc(me.sync_interval || 30)} daqiqada yangilanadi. Kurs: 1 y.e = ${money(me.usd_rate || 12500)} so'm.</p>`;
+    $("#edit").onclick = () => { $("#app").classList.add("hidden"); $("#reg").classList.remove("hidden"); $("#r-name").value = me.full_name; $("#r-phone").value = me.phone || ""; role = me.role || "tenant"; document.querySelectorAll(".roles div").forEach((x) => x.classList.toggle("active", x.dataset.role === role)); };
+  }
+
+  // boot
+  api("/api/market/me").then((m) => {
+    me = m;
+    if (m.registered) { showApp(); }
+    else { $("#reg").classList.remove("hidden"); $("#r-name").value = m.tg_name || ""; }
+  }).catch((e) => { $("#gate").classList.remove("hidden"); $("#gate-msg").textContent = e.message; });
+})();
+</script>
+</body>
+</html>

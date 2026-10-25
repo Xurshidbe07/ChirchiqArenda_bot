@@ -234,9 +234,12 @@ async def list_houses(message: Message) -> None:
     lines = ["🏠 <b>Uylar ro'yxati</b> (oxirgi 30 ta):\n"]
     for h in houses:
         status = "🟢" if h["is_active"] else "🔴"
+        src = "🟣" if h["source"] == "joymee" else "🟠"
+        unit = "y.e" if h["currency"] == "USD" else "so'm"
+        rooms = f"{h['rooms']} xona · " if h["rooms"] else ""
         lines.append(
-            f"{status} <b>#{h['id']}</b> — {html.escape(h['title'])} · "
-            f"{h['rooms']} xona · {_fmt_price(h['price'])} so'm"
+            f"{status}{src} <b>#{h['id']}</b> — {html.escape(h['title'][:40])} · "
+            f"{rooms}{_fmt_price(h['price'])} {unit}"
         )
     await message.answer("\n".join(lines))
 
@@ -493,11 +496,12 @@ def _format_house(data: dict, house_id: int | None) -> str:
     head = f"🏠 <b>{html.escape(str(data['title']))}</b>"
     if house_id is not None:
         head = f"🏠 <b>#{house_id} · {html.escape(str(data['title']))}</b>"
+    unit = "y.e" if data.get("currency") == "USD" else "so'm"
     lines = [
         head,
         f"📍 Manzil: {html.escape(str(data['address']))}",
-        f"🚪 Xonalar: {data['rooms']}",
-        f"💰 Narx: {_fmt_price(data['price'])} so'm / oy",
+        f"🚪 Xonalar: {data['rooms'] or '—'}",
+        f"💰 Narx: {_fmt_price(data['price'])} {unit} / oy",
     ]
     if data.get("description"):
         lines.append(f"📝 {html.escape(str(data['description']))}")

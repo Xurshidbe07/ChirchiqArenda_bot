@@ -13,6 +13,14 @@ SCHEMA_PATH = Path(__file__).resolve().parent.parent / "sql" / "schema.sql"
 
 _pool: asyncpg.Pool | None = None
 
+# Uy + sevimli belgisi bilan tanlash ($1 = ko'ruvchi telegram_id bo'lishi shart)
+_HOUSE_SELECT = """
+    SELECT h.*,
+           EXISTS(SELECT 1 FROM favorites f WHERE f.user_id = $1 AND f.house_id = h.id) AS is_favorite
+      FROM houses h
+"""
+PUBLIC_COND = "h.is_active AND NOT h.admin_hidden"
+
 
 async def init_db() -> None:
     """Ulanishlar pulini yaratadi va sxemani qo'llaydi."""
@@ -36,14 +44,18 @@ def pool() -> asyncpg.Pool:
 # ----------------------------------------------------------------- USERS ---
 
 async def upsert_user(telegram_id: int, full_name: str, username: str | None) -> asyncpg.Record:
-    """Foydalanuvchini ro'yxatga oladi yoki ismini/username ini yangilaydi."""
+    """Foydalanuvchini ro'yxatga oladi yoki username ini yangilaydi.
+
+    Ro'yxatdan o'tgandan keyin ismni Telegram'dan qayta yozmaymiz — klient o'zi kiritgan ism qoladi.
+    """
     return await pool().fetchrow(
         """
         INSERT INTO users (telegram_id, full_name, username)
         VALUES ($1, $2, $3)
         ON CONFLICT (telegram_id) DO UPDATE
-            SET full_name = EXCLUDED.full_name,
-                username  = EXCLUDED.username
+            SET username  = EXCLUDED.username,
+                full_name = CASE WHEN users.registered_at IS NULL THEN EXCLUDED.full_name
+                                 ELSE users.full_name END
         RETURNING *
         """,
         telegram_id, full_name, username,
@@ -55,9 +67,7 @@ async def get_user(telegram_id: int) -> asyncpg.Record | None:
 
 
 async def is_blocked(telegram_id: int) -> bool:
-    row = await pool().fetchval(
-        "SELECT is_blocked FROM users WHERE telegram_id = $1", telegram_id
-    )
+    row = await pool().fetchval("SELECT is_blocked FROM users WHERE telegram_id = $1", telegram_id)
     return bool(row)
 
 
@@ -65,12 +75,22 @@ async def set_phone(telegram_id: int, phone: str) -> None:
     await pool().execute("UPDATE users SET phone = $2 WHERE telegram_id = $1", telegram_id, phone)
 
 
-async def list_users(
-    offset: int = 0,
-    limit: int = 10,
-    blocked: bool | None = None,
-    q: str | None = None,
-) -> list[asyncpg.Record]:
+async def complete_registration(telegram_id: int, full_name: str, phone: str, role: str) -> asyncpg.Record:
+    """Market ro'yxatdan o'tishini yakunlaydi (yoki profilni yangilaydi)."""
+    return await pool().fetchrow(
+        """
+        UPDATE users
+           SET full_name = $2, phone = $3, role = $4,
+               registered_at = COALESCE(registered_at, NOW())
+         WHERE telegram_id = $1
+        RETURNING *
+        """,
+        telegram_id, full_name, phone, role,
+    )
+
+
+async def list_users(offset: int = 0, limit: int = 10, blocked: bool | None = None,
+                     q: str | None = None) -> list[asyncpg.Record]:
     """Klientlar ro'yxati. `q` — ism, username yoki telegram_id bo'yicha qidiruv."""
     conds: list[str] = []
     args: list[Any] = [limit, offset]
@@ -79,10 +99,8 @@ async def list_users(
         conds.append(f"is_blocked = ${len(args)}")
     if q:
         args.append(f"%{q.strip()}%")
-        conds.append(
-            f"(full_name ILIKE ${len(args)} OR username ILIKE ${len(args)} "
-            f"OR telegram_id::text LIKE ${len(args)})"
-        )
+        conds.append(f"(full_name ILIKE ${len(args)} OR username ILIKE ${len(args)} "
+                     f"OR telegram_id::text LIKE ${len(args)})")
     where = f"WHERE {' AND '.join(conds)}" if conds else ""
     return await pool().fetch(
         f"SELECT * FROM users {where} ORDER BY created_at DESC LIMIT $1 OFFSET $2", *args
@@ -96,13 +114,8 @@ async def count_users(blocked: bool | None = None) -> int:
 
 
 async def block_user(telegram_id: int, reason: str | None = None) -> bool:
-    """Klientni bloklaydi. Foydalanuvchi topilsa True qaytaradi."""
     status = await pool().execute(
-        """
-        UPDATE users
-           SET is_blocked = TRUE, block_reason = $2, blocked_at = NOW()
-         WHERE telegram_id = $1
-        """,
+        "UPDATE users SET is_blocked = TRUE, block_reason = $2, blocked_at = NOW() WHERE telegram_id = $1",
         telegram_id, reason,
     )
     return status.endswith(" 1")
@@ -110,11 +123,7 @@ async def block_user(telegram_id: int, reason: str | None = None) -> bool:
 
 async def unblock_user(telegram_id: int) -> bool:
     status = await pool().execute(
-        """
-        UPDATE users
-           SET is_blocked = FALSE, block_reason = NULL, blocked_at = NULL
-         WHERE telegram_id = $1
-        """,
+        "UPDATE users SET is_blocked = FALSE, block_reason = NULL, blocked_at = NULL WHERE telegram_id = $1",
         telegram_id,
     )
     return status.endswith(" 1")
@@ -122,67 +131,281 @@ async def unblock_user(telegram_id: int) -> bool:
 
 # ---------------------------------------------------------------- HOUSES ---
 
+def to_uzs(price: Decimal, currency: str) -> Decimal:
+    return price * config.usd_rate if currency == "USD" else price
+
+
 async def add_house(
     *,
     title: str,
     address: str,
-    rooms: int,
+    rooms: int | None,
     price: Decimal,
     description: str,
     photo_file_id: str | None,
     contact_phone: str | None,
     created_by: int,
+    district: str | None = None,
+    photo_file_ids: list[str] | None = None,
 ) -> int:
-    """Yangi uy qo'shadi va uning ID sini qaytaradi."""
+    """Admin qo'shgan uy (so'mda). Rasmlar Telegram file_id ko'rinishida (tg: prefiksi bilan photo_urls da)."""
+    ids = list(photo_file_ids or [])
+    if photo_file_id and photo_file_id not in ids:
+        ids.insert(0, photo_file_id)
     return await pool().fetchval(
         """
-        INSERT INTO houses (title, address, rooms, price, description,
-                            photo_file_id, contact_phone, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO houses (title, address, rooms, price, currency, price_uzs, description,
+                            photo_file_id, photo_urls, contact_phone, created_by, district,
+                            source, last_seen_at)
+        VALUES ($1, $2, $3, $4, 'UZS', $4, $5, $6, $7, $8, $9, $10, 'admin', NOW())
         RETURNING id
         """,
-        title, address, rooms, price, description, photo_file_id, contact_phone, created_by,
+        title, address, rooms, price, description, ids[0] if ids else None,
+        [f"tg:{i}" for i in ids], contact_phone, created_by, district,
     )
 
 
-async def get_house(house_id: int) -> asyncpg.Record | None:
-    return await pool().fetchrow("SELECT * FROM houses WHERE id = $1", house_id)
+async def upsert_external_house(source: str, source_id: str, d: dict[str, Any]) -> tuple[int, bool]:
+    """Tashqi manbadan kelgan e'lonni qo'shadi yoki yangilaydi. (id, yangi_qo'shildimi) qaytaradi."""
+    price: Decimal = d["price"]
+    row = await pool().fetchrow(
+        """
+        INSERT INTO houses (title, address, rooms, price, currency, price_uzs, description,
+                            contact_phone, district, area, floor, floors, photo_urls,
+                            seller_name, seller_username, lat, lon, external_created_at,
+                            source, source_id, source_url, last_seen_at, is_active, views)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
+                $19, $20, $21, NOW(), TRUE, $22)
+        ON CONFLICT (source, source_id) WHERE source_id IS NOT NULL DO UPDATE SET
+            title = EXCLUDED.title, address = EXCLUDED.address, rooms = EXCLUDED.rooms,
+            price = EXCLUDED.price, currency = EXCLUDED.currency, price_uzs = EXCLUDED.price_uzs,
+            description = EXCLUDED.description, contact_phone = EXCLUDED.contact_phone,
+            district = EXCLUDED.district, area = EXCLUDED.area, floor = EXCLUDED.floor,
+            floors = EXCLUDED.floors, photo_urls = EXCLUDED.photo_urls,
+            seller_name = EXCLUDED.seller_name, seller_username = EXCLUDED.seller_username,
+            lat = EXCLUDED.lat, lon = EXCLUDED.lon, external_created_at = EXCLUDED.external_created_at,
+            source_url = EXCLUDED.source_url, last_seen_at = NOW(),
+            is_active = NOT houses.admin_hidden,          -- admin yashirgan bo'lsa yopiq qoladi
+            views = GREATEST(houses.views, EXCLUDED.views),
+            updated_at = NOW()
+        RETURNING id, (xmax = 0) AS inserted
+        """,
+        d["title"], d["address"], d.get("rooms"), price, d["currency"], to_uzs(price, d["currency"]),
+        d.get("description", ""), d.get("contact_phone"), d.get("district"), d.get("area"),
+        d.get("floor"), d.get("floors"), d.get("photo_urls", []), d.get("seller_name"),
+        d.get("seller_username"), d.get("lat"), d.get("lon"), d.get("external_created_at"),
+        source, source_id, d.get("source_url"), d.get("views", 0),
+    )
+    return row["id"], bool(row["inserted"])
 
 
-async def list_houses(offset: int = 0, limit: int = 10, only_active: bool = True) -> list[asyncpg.Record]:
-    where = "WHERE is_active" if only_active else ""
+async def external_snapshot(source: str) -> dict[str, tuple[Decimal, str]]:
+    """Manba bo'yicha mavjud e'lonlar: source_id -> (price, title). O'zgarmaganlarni qayta yuklamaslik uchun."""
+    rows = await pool().fetch(
+        "SELECT source_id, price, title FROM houses WHERE source = $1 AND source_id IS NOT NULL", source
+    )
+    return {r["source_id"]: (r["price"], r["title"]) for r in rows}
+
+
+async def touch_seen(source: str, source_ids: list[str]) -> None:
+    if source_ids:
+        await pool().execute(
+            "UPDATE houses SET last_seen_at = NOW() WHERE source = $1 AND source_id = ANY($2::text[])",
+            source, source_ids,
+        )
+
+
+async def deactivate_missing(source: str, seen_ids: list[str]) -> int:
+    """Manbada endi yo'q e'lonlarni yashiradi (bazadan o'chirmaydi)."""
+    status = await pool().execute(
+        """
+        UPDATE houses SET is_active = FALSE, updated_at = NOW()
+         WHERE source = $1 AND source_id IS NOT NULL AND is_active
+           AND NOT (source_id = ANY($2::text[]))
+        """,
+        source, seen_ids,
+    )
+    return int(status.split()[-1])
+
+
+async def get_house(house_id: int, viewer_id: int = 0) -> asyncpg.Record | None:
+    return await pool().fetchrow(_HOUSE_SELECT + "WHERE h.id = $2", viewer_id, house_id)
+
+
+async def list_houses(offset: int = 0, limit: int = 10, only_active: bool = True,
+                      source: str | None = None, viewer_id: int = 0) -> list[asyncpg.Record]:
+    """Admin uchun ro'yxat. only_active=True bo'lsa faqat klient ko'radiganlar."""
+    conds: list[str] = []
+    args: list[Any] = [viewer_id, limit, offset]
+    if only_active:
+        conds.append(PUBLIC_COND)
+    if source:
+        args.append(source)
+        conds.append(f"h.source = ${len(args)}")
+    where = f"WHERE {' AND '.join(conds)}" if conds else ""
     return await pool().fetch(
-        f"SELECT * FROM houses {where} ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-        limit, offset,
+        _HOUSE_SELECT + f"{where} ORDER BY h.created_at DESC LIMIT $2 OFFSET $3", *args
     )
 
 
 async def count_houses(only_active: bool = True) -> int:
-    where = "WHERE is_active" if only_active else ""
-    return await pool().fetchval(f"SELECT COUNT(*) FROM houses {where}")
+    where = f"WHERE {PUBLIC_COND}" if only_active else ""
+    return await pool().fetchval(f"SELECT COUNT(*) FROM houses h {where}")
 
 
 async def delete_house(house_id: int) -> bool:
-    """Uyni bazadan butunlay o'chiradi."""
+    """Uyni bazadan butunlay o'chiradi (sevimlilar CASCADE bilan ketadi)."""
     status = await pool().execute("DELETE FROM houses WHERE id = $1", house_id)
     return status.endswith(" 1")
 
 
 async def set_house_active(house_id: int, active: bool) -> bool:
+    """Admin yashirishi/ko'rsatishi. Tashqi e'lon uchun admin_hidden ham yoziladi (sinx qayta ochmasin)."""
     status = await pool().execute(
-        "UPDATE houses SET is_active = $2 WHERE id = $1", house_id, active
+        """
+        UPDATE houses
+           SET is_active = $2,
+               admin_hidden = CASE WHEN source <> 'admin' THEN NOT $2 ELSE admin_hidden END,
+               updated_at = NOW()
+         WHERE id = $1
+        """,
+        house_id, active,
     )
     return status.endswith(" 1")
 
 
-async def stats() -> dict[str, int]:
+async def stats() -> dict[str, Any]:
     row = await pool().fetchrow(
         """
         SELECT
-            (SELECT COUNT(*) FROM users)                          AS users_total,
-            (SELECT COUNT(*) FROM users WHERE is_blocked)         AS users_blocked,
-            (SELECT COUNT(*) FROM houses)                         AS houses_total,
-            (SELECT COUNT(*) FROM houses WHERE is_active)         AS houses_active
+            (SELECT COUNT(*) FROM users)                                 AS users_total,
+            (SELECT COUNT(*) FROM users WHERE is_blocked)                AS users_blocked,
+            (SELECT COUNT(*) FROM users WHERE registered_at IS NOT NULL) AS users_registered,
+            (SELECT COUNT(*) FROM houses)                                AS houses_total,
+            (SELECT COUNT(*) FROM houses h WHERE %s)                     AS houses_active,
+            (SELECT COUNT(*) FROM houses WHERE source = 'admin')         AS houses_admin,
+            (SELECT COUNT(*) FROM houses WHERE source = 'joymee')        AS houses_joymee,
+            (SELECT COUNT(*) FROM houses h WHERE source = 'joymee' AND %s) AS houses_joymee_active,
+            (SELECT COUNT(*) FROM favorites)                             AS favorites_total
+        """ % (PUBLIC_COND, PUBLIC_COND)
+    )
+    out = dict(row)
+    last = await last_sync()
+    out["last_sync"] = last
+    return out
+
+
+# ---------------------------------------------------------------- MARKET ---
+
+async def market_houses(
+    *,
+    viewer_id: int,
+    q: str | None = None,
+    rooms: int | None = None,           # 4 => 4 va undan ko'p
+    price_min: Decimal | None = None,   # so'mda
+    price_max: Decimal | None = None,
+    district: str | None = None,
+    source: str | None = None,
+    sort: str = "new",                  # new | cheap | expensive | popular
+    offset: int = 0,
+    limit: int = 20,
+) -> list[asyncpg.Record]:
+    conds = [PUBLIC_COND]
+    args: list[Any] = [viewer_id, limit, offset]
+    if q:
+        args.append(f"%{q.strip()}%")
+        conds.append(f"(h.title ILIKE ${len(args)} OR h.address ILIKE ${len(args)} "
+                     f"OR h.description ILIKE ${len(args)} OR h.district ILIKE ${len(args)})")
+    if rooms:
+        args.append(rooms)
+        conds.append(f"h.rooms >= ${len(args)}" if rooms >= 4 else f"h.rooms = ${len(args)}")
+    if price_min is not None:
+        args.append(price_min)
+        conds.append(f"h.price_uzs >= ${len(args)}")
+    if price_max is not None:
+        args.append(price_max)
+        conds.append(f"h.price_uzs <= ${len(args)}")
+    if district:
+        args.append(district)
+        conds.append(f"h.district = ${len(args)}")
+    if source:
+        args.append(source)
+        conds.append(f"h.source = ${len(args)}")
+    order = {
+        "cheap": "h.price_uzs ASC NULLS LAST, h.created_at DESC",
+        "expensive": "h.price_uzs DESC NULLS LAST, h.created_at DESC",
+        "popular": "h.views DESC, h.created_at DESC",
+    }.get(sort, "COALESCE(h.external_created_at, h.created_at) DESC")
+    return await pool().fetch(
+        _HOUSE_SELECT + f"WHERE {' AND '.join(conds)} ORDER BY {order} LIMIT $2 OFFSET $3", *args
+    )
+
+
+async def increment_views(house_id: int) -> None:
+    await pool().execute("UPDATE houses SET views = views + 1 WHERE id = $1", house_id)
+
+
+async def districts() -> list[str]:
+    rows = await pool().fetch(
+        f"""
+        SELECT district FROM houses h
+         WHERE district IS NOT NULL AND district <> '' AND {PUBLIC_COND}
+         GROUP BY district ORDER BY COUNT(*) DESC, district
         """
     )
-    return dict(row)
+    return [r["district"] for r in rows]
+
+
+async def toggle_favorite(user_id: int, house_id: int) -> bool:
+    """Sevimliga qo'shadi yoki olib tashlaydi. Natijada sevimli bo'lsa True."""
+    deleted = await pool().execute(
+        "DELETE FROM favorites WHERE user_id = $1 AND house_id = $2", user_id, house_id
+    )
+    if deleted.endswith(" 1"):
+        return False
+    await pool().execute(
+        "INSERT INTO favorites (user_id, house_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", user_id, house_id
+    )
+    return True
+
+
+async def list_favorites(user_id: int) -> list[asyncpg.Record]:
+    return await pool().fetch(
+        _HOUSE_SELECT + f"""
+          JOIN favorites f2 ON f2.house_id = h.id AND f2.user_id = $1
+         WHERE {PUBLIC_COND}
+         ORDER BY f2.created_at DESC
+        """,
+        user_id,
+    )
+
+
+# -------------------------------------------------------------- SYNC LOG ---
+
+async def sync_started(source: str) -> int:
+    return await pool().fetchval("INSERT INTO sync_log (source) VALUES ($1) RETURNING id", source)
+
+
+async def sync_finished(log_id: int, *, added: int, updated: int, deactivated: int, seen: int,
+                        error: str | None = None) -> None:
+    await pool().execute(
+        """
+        UPDATE sync_log SET finished_at = NOW(), added = $2, updated = $3, deactivated = $4,
+                            seen = $5, error = $6
+         WHERE id = $1
+        """,
+        log_id, added, updated, deactivated, seen, error,
+    )
+
+
+async def last_sync(source: str = "joymee") -> dict[str, Any] | None:
+    row = await pool().fetchrow(
+        "SELECT * FROM sync_log WHERE source = $1 ORDER BY started_at DESC LIMIT 1", source
+    )
+    if row is None:
+        return None
+    d = dict(row)
+    for k in ("started_at", "finished_at"):
+        if d[k] is not None:
+            d[k] = d[k].isoformat()
+    return d

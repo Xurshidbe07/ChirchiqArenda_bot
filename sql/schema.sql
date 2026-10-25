@@ -29,3 +29,57 @@ CREATE TABLE IF NOT EXISTS houses (
 
 CREATE INDEX IF NOT EXISTS idx_houses_active ON houses(is_active, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_users_blocked ON users(is_blocked);
+
+-- ===================== Market: tashqi manbalar (Joymee) + klient qismi =====================
+
+-- Klient ro'yxatdan o'tishi
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role          TEXT;          -- 'tenant' | 'landlord'
+ALTER TABLE users ADD COLUMN IF NOT EXISTS registered_at TIMESTAMPTZ;   -- NULL = hali ro'yxatdan o'tmagan
+
+-- E'lon manbasi va qo'shimcha maydonlar
+ALTER TABLE houses ALTER COLUMN rooms DROP NOT NULL;                   -- tashqi e'londa xona soni bo'lmasligi mumkin
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS source        TEXT NOT NULL DEFAULT 'admin';  -- admin | joymee
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS source_id     TEXT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS source_url    TEXT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS currency      TEXT NOT NULL DEFAULT 'UZS';    -- UZS | USD
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS price_uzs     NUMERIC(16,2);                  -- filtr/saralash uchun so'mda
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS district      TEXT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS area          NUMERIC(8,1);
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS floor         SMALLINT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS floors        SMALLINT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS photo_urls    TEXT[] NOT NULL DEFAULT '{}';   -- tashqi rasm manzillari
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS seller_name   TEXT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS seller_username TEXT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS lat           DOUBLE PRECISION;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS lon           DOUBLE PRECISION;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS external_created_at TIMESTAMPTZ;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS last_seen_at  TIMESTAMPTZ;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS admin_hidden  BOOLEAN NOT NULL DEFAULT FALSE; -- admin yashirgan: sinx qayta yoqmaydi
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS views         INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+UPDATE houses SET price_uzs = price WHERE price_uzs IS NULL AND currency = 'UZS';
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_houses_source ON houses(source, source_id) WHERE source_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_houses_market ON houses(is_active, price_uzs, created_at DESC);
+
+-- Sevimlilar
+CREATE TABLE IF NOT EXISTS favorites (
+    user_id    BIGINT  NOT NULL,
+    house_id   INTEGER NOT NULL REFERENCES houses(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, house_id)
+);
+
+-- Sinxronlash jurnali
+CREATE TABLE IF NOT EXISTS sync_log (
+    id          SERIAL PRIMARY KEY,
+    source      TEXT NOT NULL,
+    started_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    finished_at TIMESTAMPTZ,
+    added       INTEGER NOT NULL DEFAULT 0,
+    updated     INTEGER NOT NULL DEFAULT 0,
+    deactivated INTEGER NOT NULL DEFAULT 0,
+    seen        INTEGER NOT NULL DEFAULT 0,
+    error       TEXT
+);
