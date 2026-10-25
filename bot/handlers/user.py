@@ -39,7 +39,7 @@ async def cmd_start(message: Message, state: FSMContext, is_admin: bool, webapp_
     text = (
         f"Assalomu alaykum, <b>{html.escape(message.from_user.full_name)}</b>! 👋\n\n"
         "<b>Chirchiq Arenda</b> — Chirchiq shahridagi ijara uylar bir joyda.\n"
-        "E'lonlar Joymee.uz dan avtomatik yig'iladi va muntazam yangilanadi.\n\n"
+        "E'lonlar muntazam yangilanib turadi.\n\n"
         "Pastdagi tugma orqali bozorni oching 👇"
     )
     if is_admin:
@@ -110,8 +110,6 @@ async def _send_house(message: Message, index: int, total: int) -> None:
         caption += f"\n📝 {html.escape(h['description'][:600])}\n"
     if h["contact_phone"]:
         caption += f"\n📞 {html.escape(h['contact_phone'])}"
-    if h["source_url"]:
-        caption += f"\n🔗 {h['source_url']}"
     markup = kb.house_nav_kb(index, total)
     photos = list(h["photo_urls"] or [])
     first = photos[0] if photos else (f"tg:{h['photo_file_id']}" if h["photo_file_id"] else None)

@@ -56,8 +56,6 @@
   .item { background: var(--card); border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; display: flex; flex-direction: column; }
   .item .img { aspect-ratio: 4/3; background: var(--bg2) center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 34px; }
   .item .fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.9); display: flex; align-items: center; justify-content: center; font-size: 16px; }
-  .item .src { position: absolute; top: 8px; left: 8px; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: rgba(0,0,0,.55); color: #fff; text-transform: uppercase; letter-spacing: .3px; }
-  .item .src.joymee { background: #5b3df5; } .item .src.admin { background: var(--accent); }
   .item .b { padding: 8px 10px 10px; }
   .item .price { font-weight: 700; font-size: 15px; }
   .item .price small { color: var(--hint); font-weight: 500; font-size: 11px; }
@@ -95,8 +93,6 @@
   .seller .n { font-weight: 600; font-size: 14px; } .seller .u { color: var(--hint); font-size: 12px; }
   .cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--bg); padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; box-shadow: 0 -1px 0 rgba(0,0,0,.08); }
   .cta button { flex: 1; padding: 13px; font-size: 15px; }
-  .srcline { margin-top: 12px; font-size: 12px; color: var(--hint); }
-  .srcline a { color: var(--link); }
 
   /* registration */
   .reg { padding: 24px 18px; max-width: 480px; margin: 0 auto; }
@@ -198,8 +194,6 @@
     <div class="row"><input id="f-min" inputmode="numeric" placeholder="dan"><input id="f-max" inputmode="numeric" placeholder="gacha"></div>
     <label>Mavze / tuman</label>
     <select id="f-district"><option value="">Hammasi</option></select>
-    <label>Manba</label>
-    <select id="f-source"><option value="">Hammasi</option><option value="joymee">Joymee</option><option value="admin">Bizning e'lonlar</option></select>
     <div class="actions"><button id="f-reset">Tozalash</button><button class="primary" id="f-apply">Ko'rsatish</button></div>
   </div>
 </div>
@@ -217,7 +211,6 @@
   const money = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const priceStr = (h) => h.currency === "USD" ? `${money(h.price)} y.e` : `${money(h.price)} so'm`;
   const uzsStr = (h) => h.currency === "USD" && h.price_uzs ? `≈ ${money(h.price_uzs)} so'm` : "";
-  const srcName = (s) => s === "joymee" ? "Joymee" : "Bizniki";
   const ago = (iso) => { const d = (Date.now() - new Date(iso)) / 36e5; if (d < 1) return "hozirgina"; if (d < 24) return `${Math.floor(d)} soat oldin`; const days = Math.floor(d / 24); return days === 1 ? "kecha" : `${days} kun oldin`; };
   let toastTimer; function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200); }
   const haptic = (t) => { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(t); } catch (e) {} };
@@ -288,10 +281,10 @@
   $("#fsheet").addEventListener("click", (e) => { if (e.target === $("#fsheet")) $("#fsheet").classList.add("hidden"); });
   $("#f-apply").addEventListener("click", () => {
     state.min = $("#f-min").value.replace(/\D/g, ""); state.max = $("#f-max").value.replace(/\D/g, "");
-    state.district = $("#f-district").value; state.source = $("#f-source").value;
-    $("#fsheet").classList.add("hidden"); $("#fbtn").textContent = (state.min || state.max || state.district || state.source) ? "⚙️ Filtr •" : "⚙️ Filtr"; loadFeed(true);
+    state.district = $("#f-district").value;
+    $("#fsheet").classList.add("hidden"); $("#fbtn").textContent = (state.min || state.max || state.district) ? "⚙️ Filtr •" : "⚙️ Filtr"; loadFeed(true);
   });
-  $("#f-reset").addEventListener("click", () => { ["#f-min", "#f-max"].forEach((s) => $(s).value = ""); $("#f-district").value = ""; $("#f-source").value = ""; $("#f-apply").click(); });
+  $("#f-reset").addEventListener("click", () => { ["#f-min", "#f-max"].forEach((s) => $(s).value = ""); $("#f-district").value = ""; $("#f-apply").click(); });
   async function loadDistricts() {
     try { const ds = await api("/api/market/districts"); $("#f-district").innerHTML = `<option value="">Hammasi</option>` + ds.map((d) => `<option>${esc(d)}</option>`).join(""); } catch (e) {}
   }
@@ -299,7 +292,7 @@
   // feed
   async function loadFeed(reset) {
     if (reset) { state.page = 0; state.items = []; $("#grid").innerHTML = `<div class="center" style="grid-column:1/-1">Yuklanmoqda…</div>`; }
-    const p = new URLSearchParams({ q: state.q, rooms: state.rooms, price_min: state.min, price_max: state.max, district: state.district, source: state.source, sort: state.sort, page: state.page });
+    const p = new URLSearchParams({ q: state.q, rooms: state.rooms, price_min: state.min, price_max: state.max, district: state.district, sort: state.sort, page: state.page });
     try {
       const r = await api("/api/market/houses?" + p);
       state.items = state.items.concat(r.items); state.page++;
@@ -311,7 +304,6 @@
   function card(h) {
     return `<div class="item" data-id="${h.id}">
       <div class="img" style="${h.photos[0] ? `background-image:url('${photo(h.photos[0])}')` : ""}">${h.photos[0] ? "" : "🏠"}</div>
-      <span class="src ${h.source}">${srcName(h.source)}</span>
       <span class="fav" data-fav="${h.id}">${h.is_favorite ? "❤️" : "🤍"}</span>
       <div class="b">
         <div class="price">${priceStr(h)} <small>/ oy</small></div>
@@ -367,17 +359,13 @@
         <div class="meta">📍 ${esc(h.address)} · ${ago(h.published_at)} · 👁 ${h.views}</div>
         ${params ? `<div class="params">${params}</div>` : ""}
         <div class="desc">${esc(h.description || "Tavsif yo'q.")}</div>
-        ${h.seller_name || h.seller_username ? `<div class="seller"><div class="av">👤</div><div><div class="n">${esc(h.seller_name || h.seller_username)}</div><div class="u">${h.seller_username ? "@" + esc(h.seller_username) + " · " : ""}${srcName(h.source)} orqali</div></div></div>` : ""}
-        <div class="srcline">Manba: ${srcName(h.source)}${h.source_url ? ` · <a href="#" id="srclink">asl e'lonni ochish ↗</a>` : ""}</div>
+        ${h.seller_name || h.seller_username ? `<div class="seller"><div class="av">👤</div><div><div class="n">${esc(h.seller_name || h.seller_username)}</div><div class="u">Uy egasi / rieltor</div></div></div>` : ""}
       </div>
       <div class="cta">
-        ${tel ? `<button class="accent" id="call">📞 Qo'ng'iroq</button>` : ""}
-        ${h.source_url ? `<button class="primary" id="open">${srcName(h.source)}'da ochish</button>` : ""}
+        ${tel ? `<button class="accent" id="call">📞 Qo'ng'iroq qilish</button>` : `<button class="primary" disabled>Telefon ko'rsatilmagan</button>`}
       </div>`;
     $("#dback").onclick = closeDetail;
     const track = $("#track"); if (track && $("#dots")) track.addEventListener("scroll", () => { const i = Math.round(track.scrollLeft / track.clientWidth) + 1; $("#dots").textContent = `${i} / ${h.photos.length}`; });
-    const openSrc = (ev) => { ev.preventDefault(); if (inTelegram && tg.openLink) tg.openLink(h.source_url); else window.open(h.source_url, "_blank"); };
-    if ($("#open")) $("#open").onclick = openSrc; if ($("#srclink")) $("#srclink").onclick = openSrc;
     if ($("#call")) $("#call").onclick = () => { location.href = "tel:" + tel; };
   }
   function closeDetail() { $("#detail").classList.add("hidden"); if (inTelegram && tg.BackButton) { tg.BackButton.hide(); tg.BackButton.offClick(closeDetail); } }
@@ -390,7 +378,7 @@
       <div class="card"><div class="k">Rol</div><div class="v">${me.role === "landlord" ? "🏠 Uy egasi" : "🔑 Ijarachi"}</div></div>
       <div class="card"><div class="k">Telegram</div><div class="v">${me.username ? "@" + esc(me.username) : "ID " + me.telegram_id}</div></div>
       <button class="primary" id="edit" style="width:100%;padding:12px">✏️ Ma'lumotlarni o'zgartirish</button>
-      <p style="color:var(--hint);font-size:12px;margin-top:14px">E'lonlar Joymee.uz dan avtomatik yig'iladi va har ${esc(me.sync_interval || 30)} daqiqada yangilanadi. Kurs: 1 y.e = ${money(me.usd_rate || 12500)} so'm.</p>`;
+      <p style="color:var(--hint);font-size:12px;margin-top:14px">E'lonlar muntazam yangilanib turadi. Kurs: 1 y.e = ${money(me.usd_rate || 12500)} so'm.</p>`;
     $("#edit").onclick = () => { $("#app").classList.add("hidden"); $("#reg").classList.remove("hidden"); $("#r-name").value = me.full_name; $("#r-phone").value = me.phone || ""; role = me.role || "tenant"; document.querySelectorAll(".roles div").forEach((x) => x.classList.toggle("active", x.dataset.role === role)); };
   }
 
