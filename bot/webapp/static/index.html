@@ -186,6 +186,7 @@
     document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = tr(el.dataset.i); });
     $("#user-q").placeholder = tr("u_search"); $("#a-id").placeholder = tr("a_id"); $("#a-note").placeholder = tr("a_note");
     $("#chip-pending").textContent = tr("c_pending") + (pendingCount ? ` (${pendingCount})` : "");
+    $("#chip-pending").classList.toggle("hidden", !pendingCount && !(me && me.moderation));
   }
 
   const tg = window.Telegram && window.Telegram.WebApp;

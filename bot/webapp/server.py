@@ -310,13 +310,15 @@ async def api_me(request: web.Request) -> web.Response:
     u = request["tg_user"]
     name = " ".join(p for p in (u.first_name, u.last_name) if p)
     return web.json_response({"id": u.id, "name": name, "username": u.username,
-                              "is_superadmin": request["is_superadmin"], "lang": request["lang"]})
+                              "is_superadmin": request["is_superadmin"], "lang": request["lang"],
+                              "moderation": config.moderation})
 
 
 async def api_stats(request: web.Request) -> web.Response:
     s = await db.stats()
     s["sync_running"] = sync.is_running()
     s["sync_interval_min"] = config.sync_interval_min
+    s["moderation"] = config.moderation
     return web.json_response(s)
 
 
@@ -492,6 +494,7 @@ async def m_me(request: web.Request) -> web.Response:
         "tg_name": " ".join(p for p in (tg.first_name, tg.last_name) if p),
         "is_admin": request["is_admin"],
         "usd_rate": config.usd_rate,
+        "moderation": config.moderation,
     })
 
 
@@ -597,17 +600,23 @@ async def m_post_house(request: web.Request) -> web.Response:
         fields["contact_phone"] = user["phone"]
     owner_label = f"{user['full_name']} (@{user['username']})" if user["username"] else user["full_name"]
     photos = await _upload_photos(request, form, f"📎 Klient e'loni ({owner_label}): {fields['title']}")
+    status = "pending" if config.moderation else "approved"
     house_id = await db.add_house(**fields, photo_file_id=None, created_by=request["tg_user"].id,
-                                  photo_file_ids=photos, owner_id=request["tg_user"].id, status="pending")
+                                  photo_file_ids=photos, owner_id=request["tg_user"].id, status=status)
     bot: Bot = request.app["bot"]
     price = f"{fields['price']:,.0f}".replace(",", " ")
     unit = "y.e" if fields["currency"] == "USD" else "so'm"
+    head = "🆕 Yangi e'lon moderatsiyada" if config.moderation else "🆕 Klient yangi e'lon joyladi"
+    tail = "Tasdiqlash: /admin → ⏳ Moderatsiya" if config.moderation else "Ko'rish: /admin → Klient e'lonlari"
     for admin_id in await db.all_admin_ids():
         await _notify(bot, admin_id,
-                      f"🆕 Yangi e'lon moderatsiyada: <b>#{house_id} {html.escape(fields['title'])}</b>\n"
-                      f"👤 {html.escape(owner_label)} · {fields['rooms']} xona · {price} {unit}\n"
-                      f"Tasdiqlash: /admin → ⏳ Moderatsiya")
-    await _notify(bot, request["tg_user"].id, t(request["lang"], "ad_received"))
+                      f"{head}: <b>#{house_id} {html.escape(fields['title'])}</b>\n"
+                      f"👤 {html.escape(owner_label)} · {fields['rooms']} xona · {price} {unit}\n{tail}")
+    if config.moderation:
+        await _notify(bot, request["tg_user"].id, t(request["lang"], "ad_received"))
+    else:
+        await _notify(bot, request["tg_user"].id,
+                      t(request["lang"], "ad_published", title=html.escape(fields["title"])))
     h = await db.get_house(house_id, viewer_id=request["tg_user"].id)
     d = _house_json(h, public=True)
     d["reject_reason"] = None

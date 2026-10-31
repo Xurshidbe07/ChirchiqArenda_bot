@@ -43,6 +43,7 @@ _T: dict[str, dict[str, str]] = {
         "mod_reason": "Sabab: {reason}",
         "mod_deleted": "🗑 Sizning «{title}» e'loningiz admin tomonidan o'chirildi.",
         "ad_received": "📨 E'loningiz qabul qilindi va moderatsiyaga yuborildi. Tasdiqlangach xabar beramiz.",
+        "ad_published": "📢 E'loningiz «{title}» bozorga joylandi!",
     },
     "ru": {
         "choose_lang": "🌐 Tilni tanlang / Выберите язык / Choose a language:",
@@ -76,6 +77,7 @@ _T: dict[str, dict[str, str]] = {
         "mod_reason": "Причина: {reason}",
         "mod_deleted": "🗑 Ваше объявление «{title}» удалено администратором.",
         "ad_received": "📨 Объявление принято и отправлено на модерацию. Сообщим после проверки.",
+        "ad_published": "📢 Ваше объявление «{title}» опубликовано!",
     },
     "en": {
         "choose_lang": "🌐 Tilni tanlang / Выберите язык / Choose a language:",
@@ -109,6 +111,7 @@ _T: dict[str, dict[str, str]] = {
         "mod_reason": "Reason: {reason}",
         "mod_deleted": "🗑 Your listing “{title}” was removed by an administrator.",
         "ad_received": "📨 Your listing was received and sent for moderation. We'll notify you once reviewed.",
+        "ad_published": "📢 Your listing “{title}” is now live!",
     },
 }
 

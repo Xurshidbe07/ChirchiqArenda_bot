@@ -23,6 +23,8 @@ class Config:
     usd_rate: int = 12500                       # 1 y.e necha so'm (filtr uchun)
     # Keep-alive: bepul hostingda (Render) server uxlab qolmasligi uchun o'ziga so'rov yuboradi
     keepalive_min: int = 10                     # 0 = o'chiq; Render 15 daqiqada uxlatadi, 10 yetarli
+    # Klient e'lonlari moderatsiyasi: False = darhol bozorga chiqadi, True = admin tasdiqlashi kerak
+    moderation: bool = False
 
 
 def _parse_admin_ids(raw: str) -> frozenset[int]:
@@ -61,6 +63,7 @@ def load_config() -> Config:
         webapp_host=os.getenv("WEBAPP_HOST", "").strip() or default_host,
         webapp_port=int(os.getenv("WEBAPP_PORT", "").strip() or hosted_port or 8080),
         keepalive_min=int(os.getenv("KEEPALIVE_MIN", "10") or 0),
+        moderation=os.getenv("MODERATION", "0").strip().lower() in ("1", "true", "yes", "on"),
         sync_interval_min=int(os.getenv("SYNC_INTERVAL_MIN", "30") or 0),
         joymee_districts=_parse_int_list(os.getenv("JOYMEE_DISTRICTS", ""), (166,)),
         joymee_categories=_parse_int_list(os.getenv("JOYMEE_CATEGORIES", ""), (4, 5)),

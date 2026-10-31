@@ -70,6 +70,15 @@ async def set_commands(bot: Bot, webapp_url: str) -> None:
     for admin_id in await db.all_admin_ids():
         try:
             await bot.set_my_commands(admin_cmds, scope=BotCommandScopeChat(chat_id=admin_id))
+            # Adminlar chatidagi Menu tugmasi ham market bo'lsin (eski "Admin" tugmasini almashtiradi);
+            # admin panel faqat /admin orqali ochiladi
+            if webapp_url:
+                await bot.set_chat_menu_button(
+                    chat_id=admin_id,
+                    menu_button=MenuButtonWebApp(text=t("uz", "menu_btn"), web_app=WebAppInfo(url=webapp_url + "/market")),
+                )
+            else:
+                await bot.set_chat_menu_button(chat_id=admin_id, menu_button=MenuButtonDefault())
         except Exception as exc:  # admin hali botga yozmagan bo'lishi mumkin
             log.warning("Admin %s uchun komandalar o'rnatilmadi: %s", admin_id, exc)
 
