@@ -182,6 +182,11 @@ async def market_page(request: web.Request) -> web.FileResponse:
     return web.FileResponse(STATIC_DIR / "market.html")
 
 
+async def health(request: web.Request) -> web.Response:
+    """Keep-alive va hosting tekshiruvi uchun (autentifikatsiyasiz)."""
+    return web.json_response({"ok": True, "sync_running": sync.is_running()})
+
+
 async def api_photo(request: web.Request) -> web.Response:
     """Telegram file_id bo'yicha rasmni proksilaydi (admin yuklagan rasmlar uchun)."""
     file_id = request.match_info["file_id"]
@@ -458,6 +463,7 @@ def create_app(bot: Bot) -> web.Application:
     app.add_routes([
         web.get("/", index),
         web.get("/market", market_page),
+        web.get("/health", health),
         web.get("/api/photo/{file_id}", api_photo),
         # admin
         web.get("/api/me", api_me),

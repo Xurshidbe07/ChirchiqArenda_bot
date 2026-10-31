@@ -111,6 +111,25 @@ DATABASE_URL=postgresql://postgres:parol@localhost:5432/chirchiq_arenda
 python -m bot.main
 ```
 
+## Serverga joylash (Render.com)
+
+Repo'da tayyor [render.yaml](render.yaml) bor: Web Service (bot + Mini App) va Postgres.
+
+1. Render dashboard → **New → Blueprint** → GitHub'dan `ChirchiqArenda_bot` repo'ni tanlang.
+2. So'ralganda `BOT_TOKEN` va `ADMIN_IDS` ni kiriting. `DATABASE_URL` bazadan, `WEBAPP_URL` esa
+   Render'ning `RENDER_EXTERNAL_URL` muhit o'zgaruvchisidan avtomatik olinadi (cloudflared kerak emas).
+3. Deploy tugagach Telegramda `/start` → Mini App Render manzilida ochiladi.
+
+**Bepul tarif eslatmalari**
+- Bepul Web Service 15 daqiqa so'rovsiz qolsa uxlaydi. Bot o'zi har `KEEPALIVE_MIN` (10) daqiqada
+  `/health` ga so'rov yuborib uyg'oq turadi (`bot/keepalive.py`). Qo'shimcha kafolat uchun
+  [UptimeRobot](https://uptimerobot.com) da `https://<nomi>.onrender.com/health` ni 5 daqiqalik monitor qiling.
+- Bepul Render Postgres 30 kundan keyin o'chadi. Uzoq muddat uchun [Neon](https://neon.tech) yoki
+  [Supabase](https://supabase.com) bepul bazasini olib, `DATABASE_URL` ni shunga almashtiring.
+
+Boshqa hostinglar (Railway, Fly.io, VPS) uchun: `PORT` berilsa bot `0.0.0.0:$PORT` da tinglaydi,
+`WEBAPP_URL` ga ochiq HTTPS manzilni yozing.
+
 ## Loyiha tuzilishi
 
 ```
@@ -125,6 +144,7 @@ ChirchiqArendabot/
 │   ├── states.py        # FSM holatlari
 │   ├── tunnel.py        # dev uchun cloudflared HTTPS tunnel
 │   ├── sync.py          # davriy sinxronlash (fon vazifasi)
+│   ├── keepalive.py     # bepul hostingda uxlamaslik uchun o'ziga ping
 │   ├── scrapers/
 │   │   └── joymee.py    # Joymee.uz API dan e'lonlarni tortish
 │   ├── webapp/

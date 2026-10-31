@@ -1,0 +1,41 @@
+# Render.com Blueprint: https://render.com/docs/blueprint-spec
+# Render dashboard -> New -> Blueprint -> shu repo'ni tanlang.
+# BOT_TOKEN va ADMIN_IDS ni Render so'raganda qo'lda kiritasiz (sync: false).
+services:
+  - type: web
+    name: chirchiq-arenda-bot
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m bot.main
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chirchiq-arenda-db
+          property: connectionString
+      # WEBAPP_URL avtomatik: Render RENDER_EXTERNAL_URL beradi, kod shuni oladi
+      - key: KEEPALIVE_MIN
+        value: "10"
+      - key: SYNC_INTERVAL_MIN
+        value: "30"
+      - key: JOYMEE_DISTRICTS
+        value: "166"
+      - key: JOYMEE_CATEGORIES
+        value: "4,5"
+      - key: USD_RATE
+        value: "12500"
+
+databases:
+  - name: chirchiq-arenda-db
+    plan: free
+    region: frankfurt
+    databaseName: chirchiq_arenda
+    user: chirchiq

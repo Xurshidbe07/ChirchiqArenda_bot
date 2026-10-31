@@ -14,7 +14,7 @@ from aiogram.types import (
     WebAppInfo,
 )
 
-from bot import db, sync, tunnel
+from bot import db, keepalive, sync, tunnel
 from bot.config import config
 from bot.handlers import admin, user
 from bot.middlewares import UserMiddleware
@@ -95,12 +95,14 @@ async def main() -> None:
 
     await set_commands(bot, webapp_url)
     sync.start_background()
+    keepalive.start_background(webapp_url)
     log.info("Bot ishga tushdi. Adminlar: %s", sorted(config.admin_ids))
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     finally:
+        await keepalive.stop_background()
         await sync.stop_background()
         await runner.cleanup()
         await tunnel.stop()
