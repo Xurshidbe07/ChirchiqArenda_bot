@@ -71,6 +71,35 @@ CREATE TABLE IF NOT EXISTS favorites (
     PRIMARY KEY (user_id, house_id)
 );
 
+-- ===================== Tillar, klient e'lonlari (moderatsiya), adminlar =====================
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS lang TEXT;                -- uz | ru | en (NULL = hali tanlamagan)
+
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS status        TEXT NOT NULL DEFAULT 'approved'; -- pending|approved|rejected
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS owner_id      BIGINT;    -- e'lonni bergan klient (admin/tashqi bo'lsa NULL)
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS reject_reason TEXT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS moderated_by  BIGINT;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS moderated_at  TIMESTAMPTZ;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'houses_status_check') THEN
+        ALTER TABLE houses ADD CONSTRAINT houses_status_check
+            CHECK (status IN ('pending', 'approved', 'rejected'));
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_houses_status ON houses(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_houses_owner  ON houses(owner_id);
+
+-- Adminlar (superadminlar ADMIN_IDS da; bu jadvalni superadmin paneldan boshqaradi)
+CREATE TABLE IF NOT EXISTS admins (
+    telegram_id BIGINT PRIMARY KEY,
+    added_by    BIGINT,
+    note        TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Sinxronlash jurnali
 CREATE TABLE IF NOT EXISTS sync_log (
     id          SERIAL PRIMARY KEY,

@@ -57,14 +57,27 @@ def remove_kb() -> ReplyKeyboardRemove:
 
 # ---------------------------------------------------------- User reply menu ---
 
+from bot.i18n import LANG_NAMES, LANGS, t  # noqa: E402
+
+# Eski nomlar (o'zbekcha) — moslik uchun
 BTN_USER_HOUSES = "🏠 Uylar"
 BTN_USER_CONTACT = "📞 Aloqa"
 
 
-def user_menu() -> ReplyKeyboardMarkup:
+def user_menu(lang: str = "uz") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=BTN_USER_HOUSES), KeyboardButton(text=BTN_USER_CONTACT)]],
+        keyboard=[
+            [KeyboardButton(text=t(lang, "btn_houses")), KeyboardButton(text=t(lang, "btn_contact"))],
+            [KeyboardButton(text=t(lang, "btn_lang"))],
+        ],
         resize_keyboard=True,
+    )
+
+
+def lang_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=LANG_NAMES[code], callback_data=f"lang:{code}")]
+                         for code in LANGS]
     )
 
 

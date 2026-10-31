@@ -7,194 +7,211 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --bg: var(--tg-theme-bg-color, #ffffff);
-    --bg2: var(--tg-theme-secondary-bg-color, #f2f3f5);
-    --text: var(--tg-theme-text-color, #111111);
-    --hint: var(--tg-theme-hint-color, #8a8f98);
-    --link: var(--tg-theme-link-color, #2481cc);
-    --btn: var(--tg-theme-button-color, #2481cc);
-    --btn-text: var(--tg-theme-button-text-color, #ffffff);
-    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
-    --danger: #e5484d;
-    --ok: #30a46c;
-    --warn: #f5a524;
-    --radius: 14px;
+    --bg: var(--tg-theme-bg-color, #ffffff); --bg2: var(--tg-theme-secondary-bg-color, #f2f3f5);
+    --text: var(--tg-theme-text-color, #111111); --hint: var(--tg-theme-hint-color, #8a8f98);
+    --link: var(--tg-theme-link-color, #2481cc); --btn: var(--tg-theme-button-color, #2481cc);
+    --btn-text: var(--tg-theme-button-text-color, #ffffff); --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --danger: #e5484d; --ok: #30a46c; --warn: #f5a524; --radius: 14px;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: var(--bg2); color: var(--text);
-    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  html, body { margin: 0; padding: 0; background: var(--bg2); color: var(--text); font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   body { padding-bottom: 90px; }
-  header { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 12px 16px 0;
-    box-shadow: 0 1px 0 rgba(0,0,0,.06); }
-  header h1 { margin: 0 0 8px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+  header { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 12px 16px 0; box-shadow: 0 1px 0 rgba(0,0,0,.06); }
+  header h1 { margin: 0 0 8px; font-size: 18px; display: flex; align-items: center; gap: 8px; justify-content: space-between; }
   header h1 small { color: var(--hint); font-weight: 400; font-size: 13px; }
-  .tabs { display: flex; gap: 4px; }
-  .tab { flex: 1; text-align: center; padding: 10px 4px; border-bottom: 2px solid transparent;
-    color: var(--hint); cursor: pointer; font-weight: 500; user-select: none; }
+  header select { font-size: 13px; border: 0; background: var(--bg2); border-radius: 8px; padding: 4px 6px; color: var(--text); }
+  .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; } .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 1; text-align: center; padding: 10px 6px; border-bottom: 2px solid transparent; color: var(--hint); cursor: pointer; font-weight: 500; user-select: none; white-space: nowrap; font-size: 14px; }
   .tab.active { color: var(--link); border-color: var(--link); }
   main { padding: 12px 16px; }
-  .card { background: var(--card); border-radius: var(--radius); padding: 12px; margin-bottom: 10px;
-    display: flex; gap: 12px; align-items: flex-start; }
-  .thumb { width: 72px; height: 72px; border-radius: 10px; background: var(--bg2); flex: none;
-    object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+  .card.pending { border: 2px solid var(--warn); }
+  .thumb { width: 72px; height: 72px; border-radius: 10px; background: var(--bg2) center/cover; flex: none; display: flex; align-items: center; justify-content: center; font-size: 28px; }
   .card .body { flex: 1; min-width: 0; }
   .card .title { font-weight: 600; margin-bottom: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .card .meta { color: var(--hint); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card .price { margin-top: 4px; font-weight: 600; }
   .badge { font-size: 11px; padding: 2px 7px; border-radius: 999px; color: #fff; font-weight: 600; }
-  .badge.ok { background: var(--ok); } .badge.off { background: var(--hint); } .badge.danger { background: var(--danger); }
+  .badge.ok { background: var(--ok); } .badge.off { background: var(--hint); } .badge.danger { background: var(--danger); } .badge.warn { background: var(--warn); } .badge.violet { background: #5b3df5; }
   .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  button { border: 0; border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 13px; font-weight: 600;
-    cursor: pointer; background: var(--bg2); color: var(--text); }
-  button.primary { background: var(--btn); color: var(--btn-text); }
-  button.danger { background: rgba(229,72,77,.12); color: var(--danger); }
-  button.ok { background: rgba(48,164,108,.14); color: var(--ok); }
+  button { border: 0; border-radius: 10px; padding: 8px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--bg2); color: var(--text); }
+  button.primary { background: var(--btn); color: var(--btn-text); } button.danger { background: rgba(229,72,77,.12); color: var(--danger); } button.ok { background: rgba(48,164,108,.14); color: var(--ok); }
   button:disabled { opacity: .5; cursor: default; }
-  .fab { position: fixed; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 20;
-    background: var(--btn); color: var(--btn-text); border-radius: 999px; padding: 14px 20px; font-size: 15px;
-    box-shadow: 0 6px 20px rgba(0,0,0,.18); }
-  .search { width: 100%; padding: 11px 14px; border-radius: 12px; border: 0; background: var(--card);
-    color: var(--text); font: inherit; margin-bottom: 10px; outline: none; }
-  .chips { display: flex; gap: 6px; margin-bottom: 10px; }
-  .chip { padding: 6px 12px; border-radius: 999px; background: var(--card); color: var(--hint); font-size: 13px; cursor: pointer; }
+  .fab { position: fixed; right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 20; background: var(--btn); color: var(--btn-text); border-radius: 999px; padding: 14px 20px; font-size: 15px; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+  .search { width: 100%; padding: 11px 14px; border-radius: 12px; border: 0; background: var(--card); color: var(--text); font: inherit; margin-bottom: 10px; outline: none; }
+  .chips { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; } .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--card); color: var(--hint); font-size: 13px; cursor: pointer; white-space: nowrap; }
   .chip.active { background: var(--btn); color: var(--btn-text); }
   .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .stat { background: var(--card); border-radius: var(--radius); padding: 16px; }
-  .stat .n { font-size: 30px; font-weight: 700; } .stat .l { color: var(--hint); font-size: 13px; }
+  .stat { background: var(--card); border-radius: var(--radius); padding: 16px; } .stat .n { font-size: 30px; font-weight: 700; } .stat .l { color: var(--hint); font-size: 13px; }
   .empty { text-align: center; color: var(--hint); padding: 40px 10px; }
   .hidden { display: none !important; }
-  /* modal */
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 30; display: flex; align-items: flex-end; }
-  .sheet { background: var(--bg); width: 100%; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
-    max-height: 92vh; overflow: auto; }
+  .sheet { background: var(--bg); width: 100%; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); max-height: 92vh; overflow: auto; }
   .sheet h2 { margin: 0 0 12px; font-size: 17px; }
   label { display: block; font-size: 13px; color: var(--hint); margin: 10px 0 4px; }
-  input, textarea, select { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,.08);
-    background: var(--bg2); color: var(--text); font: inherit; outline: none; }
+  input, textarea, select { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,.08); background: var(--bg2); color: var(--text); font: inherit; outline: none; }
   textarea { min-height: 70px; resize: vertical; }
   .row { display: flex; gap: 10px; } .row > * { flex: 1; }
   .sheet .actions { margin-top: 14px; } .sheet .actions button { flex: 1; padding: 12px; font-size: 15px; }
   .reason { margin-top: 8px; display: flex; gap: 6px; } .reason input { flex: 1; }
-  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #222; color: #fff;
-    padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 50; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 50; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; text-align: center; }
   .toast.show { opacity: .95; }
   .center { padding: 60px 20px; text-align: center; color: var(--hint); }
 </style>
 </head>
 <body>
 <header>
-  <h1>🛠 Admin panel <small id="who"></small></h1>
+  <h1><span>🛠 <span data-i="title"></span> <small id="who"></small></span><select id="lang"><option value="uz">🇺🇿 UZ</option><option value="ru">🇷🇺 RU</option><option value="en">🇬🇧 EN</option></select></h1>
   <div class="tabs">
-    <div class="tab active" data-tab="houses">🏠 Uylar</div>
-    <div class="tab" data-tab="users">👥 Klientlar</div>
-    <div class="tab" data-tab="stats">📊 Statistika</div>
+    <div class="tab active" data-tab="houses">🏠 <span data-i="t_houses"></span></div>
+    <div class="tab" data-tab="users">👥 <span data-i="t_users"></span></div>
+    <div class="tab" data-tab="stats">📊 <span data-i="t_stats"></span></div>
+    <div class="tab hidden" data-tab="admins" id="tab-admins">🛡 <span data-i="t_admins"></span></div>
   </div>
 </header>
 
 <main>
   <section id="houses">
     <div class="chips">
-      <span class="chip active" data-f="all">Hammasi</span>
-      <span class="chip" data-f="active">Faol</span>
-      <span class="chip" data-f="hidden">Yashirilgan</span>
-      <span class="chip" data-f="joymee">Avtomatik</span>
-      <span class="chip" data-f="admin">Qo'lda qo'shilgan</span>
+      <span class="chip active" data-f="all" data-i="c_all"></span>
+      <span class="chip" data-f="pending" id="chip-pending"></span>
+      <span class="chip" data-f="active" data-i="c_active"></span>
+      <span class="chip" data-f="hidden" data-i="c_hidden"></span>
+      <span class="chip" data-f="clients" data-i="c_clients"></span>
+      <span class="chip" data-f="joymee" data-i="c_auto"></span>
+      <span class="chip" data-f="manual" data-i="c_manual"></span>
     </div>
     <div class="actions" style="margin:0 0 10px">
-      <button class="primary" id="sync">🔄 E'lonlarni yangilash</button>
+      <button class="primary" id="sync" data-i="sync"></button>
       <span id="sync-info" style="font-size:12px;color:var(--hint);align-self:center"></span>
     </div>
     <div id="houses-list"></div>
   </section>
 
   <section id="users" class="hidden">
-    <input class="search" id="user-q" placeholder="Ism, @username yoki ID bo'yicha qidirish">
+    <input class="search" id="user-q">
     <div class="chips">
-      <span class="chip active" data-b="all">Hammasi</span>
-      <span class="chip" data-b="0">Faol</span>
-      <span class="chip" data-b="1">Bloklangan</span>
+      <span class="chip active" data-b="all" data-i="c_all"></span>
+      <span class="chip" data-b="0" data-i="u_active"></span>
+      <span class="chip" data-b="1" data-i="u_blocked"></span>
     </div>
     <div id="users-list"></div>
   </section>
 
-  <section id="stats" class="hidden">
-    <div class="stats" id="stats-grid"></div>
+  <section id="stats" class="hidden"><div class="stats" id="stats-grid"></div></section>
+
+  <section id="admins" class="hidden">
+    <div class="card" style="display:block">
+      <div style="font-weight:600;margin-bottom:6px" data-i="a_add_title"></div>
+      <div class="row"><input id="a-id" inputmode="numeric"><input id="a-note"></div>
+      <div class="actions"><button class="primary" id="a-add" data-i="a_add"></button></div>
+      <div style="font-size:12px;color:var(--hint);margin-top:6px" data-i="a_hint"></div>
+    </div>
+    <div id="admins-list"></div>
   </section>
 
-  <div id="gate" class="center hidden">
-    ⚠️ Bu sahifa faqat Telegram ichida, admin akkaunt bilan ochiladi.
-    <div id="gate-msg" style="margin-top:8px;font-size:13px"></div>
-  </div>
+  <div id="gate" class="center hidden">⚠️ <span data-i="gate"></span><div id="gate-msg" style="margin-top:8px;font-size:13px"></div></div>
 </main>
 
-<button class="fab" id="fab">＋ Uy qo'shish</button>
+<button class="fab" id="fab" data-i="add_house"></button>
 
 <div class="modal hidden" id="modal">
   <div class="sheet">
-    <h2>➕ Yangi uy</h2>
+    <h2 data-i="new_house"></h2>
     <form id="house-form">
-      <label>Nomi *</label><input name="title" required maxlength="120" placeholder="2 xonali, markazda">
-      <label>Manzil *</label><input name="address" required maxlength="250" placeholder="Chirchiq, Yoshlik mavzesi 12-uy">
-      <label>Mavze / tuman</label><input name="district" maxlength="80" placeholder="Yoshlik mavzesi">
+      <label><span data-i="f_title"></span> *</label><input name="title" required maxlength="120">
+      <label><span data-i="f_address"></span> *</label><input name="address" required maxlength="250">
+      <label data-i="f_district"></label><input name="district" maxlength="80">
       <div class="row">
-        <div><label>Xonalar *</label><input name="rooms" type="number" min="1" max="50" required placeholder="2"></div>
-        <div><label>Narx (so'm/oy) *</label><input name="price" type="number" min="0" step="1000" required placeholder="2500000"></div>
+        <div><label><span data-i="f_rooms"></span> *</label><input name="rooms" type="number" min="1" max="50" required></div>
+        <div><label data-i="f_area"></label><input name="area" type="number" min="1" step="0.1"></div>
       </div>
-      <label>Telefon</label><input name="contact_phone" maxlength="30" placeholder="+998901234567">
-      <label>Tavsif</label><textarea name="description" maxlength="1500" placeholder="Remont, mebel, qavat..."></textarea>
-      <label>Rasmlar (8 tagacha)</label><input name="photos" type="file" accept="image/*" multiple>
+      <div class="row">
+        <div><label><span data-i="f_price"></span> *</label><input name="price" type="number" min="0" required></div>
+        <div><label data-i="f_currency"></label><select name="currency"><option value="UZS">so'm</option><option value="USD">y.e ($)</option></select></div>
+      </div>
+      <div class="row">
+        <div><label data-i="f_floor"></label><input name="floor" type="number" min="0" max="200"></div>
+        <div><label data-i="f_floors"></label><input name="floors" type="number" min="1" max="200"></div>
+      </div>
+      <label data-i="f_phone"></label><input name="contact_phone" maxlength="30" placeholder="+998901234567">
+      <label data-i="f_desc"></label><textarea name="description" maxlength="1500"></textarea>
+      <label data-i="f_photos"></label><input name="photos" type="file" accept="image/*" multiple>
       <div class="actions">
-        <button type="button" id="cancel">Bekor qilish</button>
-        <button type="submit" class="primary" id="save">Saqlash</button>
+        <button type="button" id="cancel" data-i="cancel"></button>
+        <button type="submit" class="primary" id="save" data-i="save"></button>
       </div>
     </form>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 (() => {
+  const I18N = {
+    uz: { title: "Admin panel", gate: "Bu sahifa faqat Telegram ichida, admin akkaunt bilan ochiladi.", t_houses: "Uylar", t_users: "Klientlar", t_stats: "Statistika", t_admins: "Adminlar",
+      c_all: "Hammasi", c_pending: "⏳ Moderatsiya", c_active: "Faol", c_hidden: "Yashirilgan", c_clients: "Klient e'lonlari", c_auto: "Avtomatik", c_manual: "Qo'lda qo'shilgan",
+      sync: "🔄 E'lonlarni yangilash", syncing: "⏳ Yangilanmoqda…", sync_last: "Oxirgi yangilanish", sync_never: "Hali yangilanmagan", sync_done: "Yangi {a}, yangilandi {u}, yopildi {d}", sync_err: "xato",
+      add_house: "＋ Uy qo'shish", new_house: "➕ Yangi uy", f_title: "Nomi", f_address: "Manzil", f_district: "Mavze / tuman", f_rooms: "Xonalar", f_area: "Maydon, m²", f_price: "Narx (oyiga)", f_currency: "Valyuta", f_floor: "Qavat", f_floors: "Uy qavatlari", f_phone: "Telefon", f_desc: "Tavsif", f_photos: "Rasmlar (8 tagacha)", cancel: "Bekor qilish", save: "Saqlash", saving: "Saqlanmoqda…", saved: "Uy #{id} qo'shildi",
+      b_active: "faol", b_hidden: "yashirin", b_pending: "moderatsiyada", b_rejected: "rad etilgan", b_manual: "qo'lda", b_client: "klient", owner: "Egasi", rooms: "xona", per_month: "/ oy", empty: "Uylar yo'q",
+      hide: "🙈 Yashirish", show: "👁 Ko'rsatish", del: "🗑 O'chirish", del_confirm: "#{id} «{t}» o'chirilsinmi?", deleted: "O'chirildi", approve: "✅ Tasdiqlash", reject: "❌ Rad etish", reject_reason: "Rad etish sababi", approved: "Tasdiqlandi ✅", rejected: "Rad etildi", reason: "Sabab",
+      u_search: "Ism, @username yoki ID bo'yicha qidirish", u_active: "Faol", u_blocked: "Bloklangan", u_title: "Klientlar", u_hint: "✅ — faol, 🚫 — bloklangan", u_empty: "Klientlar topilmadi", block: "🚫 Bloklash", unblock: "✅ Blokdan chiqarish", block_reason: "Sabab (ixtiyoriy)", blocked: "Bloklandi", unblocked: "Blokdan chiqarildi", registered: "ro'yxatdan o'tgan",
+      s_users: "👥 Klientlar", s_registered: "✅ Ro'yxatdan o'tgan", s_blocked: "🚫 Bloklangan", s_favs: "❤️ Sevimlilar", s_total: "🏠 Jami e'lonlar", s_active: "🟢 Faol", s_pending: "⏳ Moderatsiyada", s_clients: "👤 Klient e'lonlari", s_auto: "🤖 Avtomatik", s_manual: "✍️ Qo'lda qo'shilgan", s_admins: "🛡 Adminlar", s_last: "Oxirgi yangilanish", s_seen: "ko'rildi", s_new: "yangi", s_upd: "yangilandi", s_closed: "yopildi", s_auto_every: "Avtomatik: har {n} daqiqada", s_auto_off: "Avtomatik: o'chiq", s_error: "Xato",
+      a_add_title: "Admin qo'shish", a_id: "Telegram ID", a_note: "Izoh (ism)", a_add: "➕ Qo'shish", a_hint: "Foydalanuvchi avval botga /start yuborgan bo'lishi kerak. ID ni «Klientlar» bo'limidan oling.", a_super: "superadmin", a_remove: "🗑 Olib tashlash", a_remove_confirm: "{id} adminlikdan olinsinmi?", a_added: "Admin qo'shildi", a_removed: "Olib tashlandi", a_empty: "Adminlar yo'q" },
+    ru: { title: "Админ-панель", gate: "Страница открывается только в Telegram с аккаунта администратора.", t_houses: "Жильё", t_users: "Клиенты", t_stats: "Статистика", t_admins: "Админы",
+      c_all: "Все", c_pending: "⏳ Модерация", c_active: "Активные", c_hidden: "Скрытые", c_clients: "От клиентов", c_auto: "Автоматические", c_manual: "Добавленные вручную",
+      sync: "🔄 Обновить объявления", syncing: "⏳ Обновление…", sync_last: "Последнее обновление", sync_never: "Ещё не обновлялось", sync_done: "Новых {a}, обновлено {u}, закрыто {d}", sync_err: "ошибка",
+      add_house: "＋ Добавить жильё", new_house: "➕ Новое объявление", f_title: "Название", f_address: "Адрес", f_district: "Район", f_rooms: "Комнат", f_area: "Площадь, м²", f_price: "Цена (в месяц)", f_currency: "Валюта", f_floor: "Этаж", f_floors: "Этажей", f_phone: "Телефон", f_desc: "Описание", f_photos: "Фото (до 8)", cancel: "Отмена", save: "Сохранить", saving: "Сохранение…", saved: "Объявление #{id} добавлено",
+      b_active: "активно", b_hidden: "скрыто", b_pending: "на модерации", b_rejected: "отклонено", b_manual: "вручную", b_client: "клиент", owner: "Владелец", rooms: "комн.", per_month: "/ мес", empty: "Объявлений нет",
+      hide: "🙈 Скрыть", show: "👁 Показать", del: "🗑 Удалить", del_confirm: "Удалить #{id} «{t}»?", deleted: "Удалено", approve: "✅ Одобрить", reject: "❌ Отклонить", reject_reason: "Причина отказа", approved: "Одобрено ✅", rejected: "Отклонено", reason: "Причина",
+      u_search: "Поиск по имени, @username или ID", u_active: "Активные", u_blocked: "Заблокированные", u_title: "Клиенты", u_hint: "✅ — активен, 🚫 — заблокирован", u_empty: "Клиенты не найдены", block: "🚫 Заблокировать", unblock: "✅ Разблокировать", block_reason: "Причина (необязательно)", blocked: "Заблокирован", unblocked: "Разблокирован", registered: "зарегистрирован",
+      s_users: "👥 Клиенты", s_registered: "✅ Зарегистрированы", s_blocked: "🚫 Заблокированы", s_favs: "❤️ Избранное", s_total: "🏠 Всего объявлений", s_active: "🟢 Активные", s_pending: "⏳ На модерации", s_clients: "👤 От клиентов", s_auto: "🤖 Автоматические", s_manual: "✍️ Вручную", s_admins: "🛡 Админы", s_last: "Последнее обновление", s_seen: "просмотрено", s_new: "новых", s_upd: "обновлено", s_closed: "закрыто", s_auto_every: "Автоматически: каждые {n} мин", s_auto_off: "Автоматически: выкл", s_error: "Ошибка",
+      a_add_title: "Добавить админа", a_id: "Telegram ID", a_note: "Заметка (имя)", a_add: "➕ Добавить", a_hint: "Пользователь должен сначала отправить боту /start. ID можно взять в разделе «Клиенты».", a_super: "суперадмин", a_remove: "🗑 Убрать", a_remove_confirm: "Убрать {id} из админов?", a_added: "Админ добавлен", a_removed: "Убран", a_empty: "Админов нет" },
+    en: { title: "Admin panel", gate: "This page opens only inside Telegram with an admin account.", t_houses: "Listings", t_users: "Clients", t_stats: "Stats", t_admins: "Admins",
+      c_all: "All", c_pending: "⏳ Review", c_active: "Active", c_hidden: "Hidden", c_clients: "From clients", c_auto: "Automatic", c_manual: "Added manually",
+      sync: "🔄 Refresh listings", syncing: "⏳ Refreshing…", sync_last: "Last refresh", sync_never: "Not refreshed yet", sync_done: "New {a}, updated {u}, closed {d}", sync_err: "error",
+      add_house: "＋ Add listing", new_house: "➕ New listing", f_title: "Title", f_address: "Address", f_district: "District", f_rooms: "Rooms", f_area: "Area, m²", f_price: "Price (per month)", f_currency: "Currency", f_floor: "Floor", f_floors: "Floors", f_phone: "Phone", f_desc: "Description", f_photos: "Photos (up to 8)", cancel: "Cancel", save: "Save", saving: "Saving…", saved: "Listing #{id} added",
+      b_active: "active", b_hidden: "hidden", b_pending: "under review", b_rejected: "rejected", b_manual: "manual", b_client: "client", owner: "Owner", rooms: "rooms", per_month: "/ month", empty: "No listings",
+      hide: "🙈 Hide", show: "👁 Show", del: "🗑 Delete", del_confirm: "Delete #{id} “{t}”?", deleted: "Deleted", approve: "✅ Approve", reject: "❌ Reject", reject_reason: "Rejection reason", approved: "Approved ✅", rejected: "Rejected", reason: "Reason",
+      u_search: "Search by name, @username or ID", u_active: "Active", u_blocked: "Blocked", u_title: "Clients", u_hint: "✅ — active, 🚫 — blocked", u_empty: "No clients found", block: "🚫 Block", unblock: "✅ Unblock", block_reason: "Reason (optional)", blocked: "Blocked", unblocked: "Unblocked", registered: "registered",
+      s_users: "👥 Clients", s_registered: "✅ Registered", s_blocked: "🚫 Blocked", s_favs: "❤️ Favorites", s_total: "🏠 Total listings", s_active: "🟢 Active", s_pending: "⏳ Under review", s_clients: "👤 From clients", s_auto: "🤖 Automatic", s_manual: "✍️ Manual", s_admins: "🛡 Admins", s_last: "Last refresh", s_seen: "seen", s_new: "new", s_upd: "updated", s_closed: "closed", s_auto_every: "Automatic: every {n} min", s_auto_off: "Automatic: off", s_error: "Error",
+      a_add_title: "Add admin", a_id: "Telegram ID", a_note: "Note (name)", a_add: "➕ Add", a_hint: "The user must have sent /start to the bot first. Take the ID from the Clients tab.", a_super: "superadmin", a_remove: "🗑 Remove", a_remove_confirm: "Remove {id} from admins?", a_added: "Admin added", a_removed: "Removed", a_empty: "No admins" },
+  };
+  let lang = "uz";
+  const tr = (k, vars) => { let s = (I18N[lang] && I18N[lang][k]) || I18N.uz[k] || k; if (vars) for (const v in vars) s = s.replace("{" + v + "}", vars[v]); return s; };
+  function applyI18n() {
+    document.documentElement.lang = lang; $("#lang").value = lang;
+    document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = tr(el.dataset.i); });
+    $("#user-q").placeholder = tr("u_search"); $("#a-id").placeholder = tr("a_id"); $("#a-note").placeholder = tr("a_note");
+    $("#chip-pending").textContent = tr("c_pending") + (pendingCount ? ` (${pendingCount})` : "");
+  }
+
   const tg = window.Telegram && window.Telegram.WebApp;
   const initData = tg ? tg.initData : "";
   if (tg) { tg.ready(); tg.expand(); }
-
+  const inTelegram = !!(tg && tg.platform && tg.platform !== "unknown" && tg.initDataUnsafe && tg.initDataUnsafe.query_id);
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const money = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-
-  let toastTimer;
-  function toast(msg) {
-    const t = $("#toast"); t.textContent = msg; t.classList.add("show");
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
-  }
+  const priceStr = (h) => (h.currency === "USD" ? money(h.price) + " y.e" : money(h.price) + " so'm");
+  const photoUrl = (u) => u.startsWith("/api/photo/") ? u + "?_auth=" + encodeURIComponent(initData) : u;
+  let toastTimer; function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2400); }
   function haptic(type) { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(type); } catch (e) {} }
-  // Telegram ichida — showConfirm; tashqarida (brauzer) — oddiy confirm
-  const inTelegram = !!(tg && tg.platform && tg.platform !== "unknown" && tg.initDataUnsafe && tg.initDataUnsafe.query_id);
-  function confirmDlg(msg) {
-    return new Promise((res) => {
-      if (inTelegram && tg.showConfirm) tg.showConfirm(msg, res); else res(window.confirm(msg));
-    });
-  }
-
+  const confirmDlg = (msg) => new Promise((res) => { if (inTelegram && tg.showConfirm) tg.showConfirm(msg, res); else res(window.confirm(msg)); });
   async function api(path, opts = {}) {
     const headers = Object.assign({ Authorization: "tma " + initData }, opts.headers || {});
     const r = await fetch(path, Object.assign({}, opts, { headers }));
     if (!r.ok) throw new Error((await r.text()) || ("HTTP " + r.status));
     return r.status === 204 ? null : r.json();
   }
-  const photoUrl = (u) => u.startsWith("/api/photo/") ? u + "?_auth=" + encodeURIComponent(initData) : u;
-  const priceStr = (h) => (h.currency === "USD" ? money(h.price) + " y.e" : money(h.price) + " so'm");
+  let me = null, pendingCount = 0;
+  if (!initData) { document.querySelectorAll("main > section").forEach((s) => s.classList.add("hidden")); $("#gate").classList.remove("hidden"); $("#fab").classList.add("hidden"); applyI18n(); return; }
 
-  // ---------- gate ----------
-  if (!initData) {
-    document.querySelectorAll("main > section").forEach((s) => s.classList.add("hidden"));
-    $("#gate").classList.remove("hidden"); $("#fab").classList.add("hidden");
-    return;
-  }
+  $("#lang").addEventListener("change", () => { lang = $("#lang").value; try { localStorage.setItem("admin_lang", lang); } catch (e) {} applyI18n(); renderHouses(); renderUsers(); });
 
   // ---------- tabs ----------
-  const loaders = { houses: loadHouses, users: loadUsers, stats: loadStats };
+  const loaders = { houses: loadHouses, users: loadUsers, stats: loadStats, admins: loadAdmins };
   document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
     document.querySelectorAll("main > section").forEach((s) => s.classList.toggle("hidden", s.id !== t.dataset.tab));
@@ -204,59 +221,69 @@
 
   // ---------- houses ----------
   let houses = [], houseFilter = "all";
-  document.querySelectorAll("#houses .chip").forEach((c) => c.addEventListener("click", () => {
-    document.querySelectorAll("#houses .chip").forEach((x) => x.classList.toggle("active", x === c));
-    houseFilter = c.dataset.f; renderHouses();
-  }));
-
+  document.querySelectorAll("#houses .chip").forEach((c) => c.addEventListener("click", () => { document.querySelectorAll("#houses .chip").forEach((x) => x.classList.toggle("active", x === c)); houseFilter = c.dataset.f; renderHouses(); }));
   async function loadHouses() {
-    try { houses = await api("/api/houses"); renderHouses(); loadSyncInfo(); }
+    try { houses = await api("/api/houses"); pendingCount = houses.filter((h) => h.status === "pending").length; applyI18n(); renderHouses(); loadSyncInfo(); }
     catch (e) { $("#houses-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
   async function loadSyncInfo() {
-    try {
-      const s = await api("/api/stats"); const ls = s.last_sync;
-      $("#sync-info").textContent = ls ? `Oxirgi yangilanish: ${new Date(ls.finished_at || ls.started_at).toLocaleString("uz")} · ${ls.seen} ta` + (ls.error ? " · xato" : "") : "Hali yangilanmagan";
-    } catch (e) {}
+    try { const s = await api("/api/stats"); const ls = s.last_sync;
+      $("#sync-info").textContent = ls ? `${tr("sync_last")}: ${new Date(ls.finished_at || ls.started_at).toLocaleString()} · ${ls.seen}` + (ls.error ? " · " + tr("sync_err") : "") : tr("sync_never"); } catch (e) {}
   }
   $("#sync").addEventListener("click", async () => {
-    const b = $("#sync"); b.disabled = true; b.textContent = "⏳ Yangilanmoqda…";
-    try { const r = await api("/api/sync", { method: "POST" }); haptic("success"); toast(`Yangi ${r.added}, yangilandi ${r.updated}, yopildi ${r.deactivated}`); await loadHouses(); }
-    catch (e) { haptic("error"); toast(e.message); }
-    finally { b.disabled = false; b.textContent = "🔄 E'lonlarni yangilash"; }
+    const b = $("#sync"); b.disabled = true; b.textContent = tr("syncing");
+    try { const r = await api("/api/sync", { method: "POST" }); haptic("success"); toast(tr("sync_done", { a: r.added, u: r.updated, d: r.deactivated })); await loadHouses(); }
+    catch (e) { haptic("error"); toast(e.message); } finally { b.disabled = false; b.textContent = tr("sync"); }
   });
+  function matches(h) {
+    switch (houseFilter) {
+      case "pending": return h.status === "pending"; case "active": return h.is_active && h.status === "approved"; case "hidden": return !h.is_active;
+      case "clients": return h.is_client_ad; case "joymee": return h.source === "joymee"; case "manual": return h.source === "admin" && !h.is_client_ad; default: return true;
+    }
+  }
   function renderHouses() {
-    const list = houses.filter((h) => houseFilter === "all" || (houseFilter === "active" ? h.is_active : houseFilter === "hidden" ? !h.is_active : h.source === houseFilter));
-    if (!list.length) { $("#houses-list").innerHTML = `<div class="empty">Uylar yo'q</div>`; return; }
+    if (!houses) return;
+    const list = houses.filter(matches);
+    if (!list.length) { $("#houses-list").innerHTML = `<div class="empty">${tr("empty")}</div>`; return; }
     $("#houses-list").innerHTML = list.map((h) => `
-      <div class="card" data-id="${h.id}">
+      <div class="card ${h.status === "pending" ? "pending" : ""}" data-id="${h.id}">
         ${h.photos[0] ? `<img class="thumb" loading="lazy" src="${photoUrl(h.photos[0])}" alt="">` : `<div class="thumb">🏠</div>`}
         <div class="body">
           <div class="title">#${h.id} ${esc(h.title)}
-            <span class="badge ${h.is_active ? "ok" : "off"}">${h.is_active ? "faol" : "yashirin"}</span>
-            ${h.source === "admin" ? `<span class="badge" style="background:var(--warn)">qo'lda</span>` : ""}</div>
-          <div class="meta">📍 ${esc(h.district || h.address)}${h.rooms ? " · 🚪 " + h.rooms + " xona" : ""}${h.contact_phone ? " · 📞 " + esc(h.contact_phone) : ""}</div>
-          <div class="price">${priceStr(h)} / oy${h.views ? ` <span style="color:var(--hint);font-weight:400;font-size:12px">· 👁 ${h.views}</span>` : ""}</div>
+            ${h.status === "pending" ? `<span class="badge warn">${tr("b_pending")}</span>` : h.status === "rejected" ? `<span class="badge danger">${tr("b_rejected")}</span>` : `<span class="badge ${h.is_active ? "ok" : "off"}">${h.is_active ? tr("b_active") : tr("b_hidden")}</span>`}
+            ${h.is_client_ad ? `<span class="badge violet">${tr("b_client")}</span>` : h.source === "admin" ? `<span class="badge" style="background:var(--warn)">${tr("b_manual")}</span>` : ""}</div>
+          <div class="meta">📍 ${esc(h.district || h.address)}${h.rooms ? " · 🚪 " + h.rooms + " " + tr("rooms") : ""}${h.contact_phone ? " · 📞 " + esc(h.contact_phone) : ""}</div>
+          ${h.is_client_ad ? `<div class="meta">👤 ${tr("owner")}: ${esc(h.owner_name || "")}${h.owner_username ? " @" + esc(h.owner_username) : ""} · ID ${h.owner_id}</div>` : ""}
+          ${h.reject_reason ? `<div class="meta">${tr("reason")}: ${esc(h.reject_reason)}</div>` : ""}
+          <div class="price">${priceStr(h)} ${tr("per_month")}${h.views ? ` <span style="color:var(--hint);font-weight:400;font-size:12px">· 👁 ${h.views}</span>` : ""}</div>
           <div class="actions">
-            <button data-act="toggle">${h.is_active ? "🙈 Yashirish" : "👁 Ko'rsatish"}</button>
-            ${h.source === "admin" ? `<button class="danger" data-act="del">🗑 O'chirish</button>` : ""}
+            ${h.status === "pending" ? `<button class="ok" data-act="approve">${tr("approve")}</button><button class="danger" data-act="reject">${tr("reject")}</button>` : ""}
+            ${h.status === "rejected" ? `<button class="ok" data-act="approve">${tr("approve")}</button>` : ""}
+            ${h.status === "approved" ? `<button data-act="toggle">${h.is_active ? tr("hide") : tr("show")}</button>` : ""}
+            ${h.source === "admin" ? `<button class="danger" data-act="del">${tr("del")}</button>` : ""}
           </div>
+          <div class="reason hidden"><input maxlength="300"><button class="danger" data-act="reject-confirm">${tr("reject")}</button></div>
         </div>
       </div>`).join("");
+    $("#houses-list").querySelectorAll(".reason input").forEach((i) => i.placeholder = tr("reject_reason"));
   }
   $("#houses-list").addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-act]"); if (!btn) return;
-    const id = +btn.closest(".card").dataset.id; const h = houses.find((x) => x.id === id);
+    const card = btn.closest(".card"); const id = +card.dataset.id; const h = houses.find((x) => x.id === id);
+    if (btn.dataset.act === "reject") { card.querySelector(".reason").classList.remove("hidden"); card.querySelector(".reason input").focus(); return; }
     btn.disabled = true;
     try {
       if (btn.dataset.act === "del") {
-        if (!(await confirmDlg(`#${id} «${h.title}» o'chirilsinmi?`))) { btn.disabled = false; return; }
-        await api("/api/houses/" + id, { method: "DELETE" });
-        houses = houses.filter((x) => x.id !== id); haptic("success"); toast("O'chirildi");
-      } else {
-        const upd = await api("/api/houses/" + id, { method: "PATCH", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ is_active: !h.is_active }) });
-        Object.assign(h, upd); haptic("success");
+        if (!(await confirmDlg(tr("del_confirm", { id, t: h.title })))) { btn.disabled = false; return; }
+        await api("/api/houses/" + id, { method: "DELETE" }); houses = houses.filter((x) => x.id !== id); haptic("success"); toast(tr("deleted"));
+      } else if (btn.dataset.act === "toggle") {
+        const upd = await api("/api/houses/" + id, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_active: !h.is_active }) }); Object.assign(h, upd); haptic("success");
+      } else if (btn.dataset.act === "approve" || btn.dataset.act === "reject-confirm") {
+        const status = btn.dataset.act === "approve" ? "approved" : "rejected";
+        const reason = status === "rejected" ? card.querySelector(".reason input").value : "";
+        const upd = await api(`/api/houses/${id}/moderate`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status, reason }) });
+        Object.assign(h, upd); haptic("success"); toast(status === "approved" ? tr("approved") : tr("rejected"));
+        pendingCount = houses.filter((x) => x.status === "pending").length; applyI18n();
       }
       renderHouses();
     } catch (err) { haptic("error"); toast(err.message); btn.disabled = false; }
@@ -268,46 +295,31 @@
   $("#cancel").addEventListener("click", () => modal.classList.add("hidden"));
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
   form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const save = $("#save"); save.disabled = true; save.textContent = "Saqlanmoqda…";
-    try {
-      const h = await api("/api/houses", { method: "POST", body: new FormData(form) });
-      houses.unshift(h); renderHouses(); modal.classList.add("hidden"); haptic("success"); toast(`Uy #${h.id} qo'shildi`);
-    } catch (err) { haptic("error"); toast(err.message); }
-    finally { save.disabled = false; save.textContent = "Saqlash"; }
+    e.preventDefault(); const save = $("#save"); save.disabled = true; save.textContent = tr("saving");
+    try { const h = await api("/api/houses", { method: "POST", body: new FormData(form) }); houses.unshift(h); renderHouses(); modal.classList.add("hidden"); haptic("success"); toast(tr("saved", { id: h.id })); }
+    catch (err) { haptic("error"); toast(err.message); } finally { save.disabled = false; save.textContent = tr("save"); }
   });
 
   // ---------- users ----------
   let users = [], userBlocked = "all", qTimer;
   $("#user-q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(loadUsers, 300); });
-  document.querySelectorAll("#users .chip").forEach((c) => c.addEventListener("click", () => {
-    document.querySelectorAll("#users .chip").forEach((x) => x.classList.toggle("active", x === c));
-    userBlocked = c.dataset.b; loadUsers();
-  }));
+  document.querySelectorAll("#users .chip").forEach((c) => c.addEventListener("click", () => { document.querySelectorAll("#users .chip").forEach((x) => x.classList.toggle("active", x === c)); userBlocked = c.dataset.b; loadUsers(); }));
   async function loadUsers() {
-    try {
-      const p = new URLSearchParams({ q: $("#user-q").value, blocked: userBlocked });
-      users = (await api("/api/users?" + p)).items; renderUsers();
-    } catch (e) { $("#users-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+    try { const p = new URLSearchParams({ q: $("#user-q").value, blocked: userBlocked }); users = (await api("/api/users?" + p)).items; renderUsers(); }
+    catch (e) { $("#users-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
   function renderUsers() {
-    if (!users.length) { $("#users-list").innerHTML = `<div class="empty">Klientlar topilmadi</div>`; return; }
+    if (!users) return;
+    if (!users.length) { $("#users-list").innerHTML = `<div class="empty">${tr("u_empty")}</div>`; return; }
     $("#users-list").innerHTML = users.map((u) => `
       <div class="card" data-id="${u.telegram_id}">
         <div class="thumb">${u.is_blocked ? "🚫" : "👤"}</div>
         <div class="body">
-          <div class="title">${esc(u.full_name) || "—"} ${u.is_blocked ? `<span class="badge danger">bloklangan</span>` : ""}</div>
-          <div class="meta">${u.username ? "@" + esc(u.username) + " · " : ""}ID ${u.telegram_id}${u.phone ? " · 📞 " + esc(u.phone) : ""}</div>
-          ${u.is_blocked && u.block_reason ? `<div class="meta">Sabab: ${esc(u.block_reason)}</div>` : ""}
-          <div class="actions">
-            ${u.is_blocked
-              ? `<button class="ok" data-act="unblock">✅ Blokdan chiqarish</button>`
-              : `<button class="danger" data-act="block">🚫 Bloklash</button>`}
-          </div>
-          <div class="reason hidden">
-            <input placeholder="Sabab (ixtiyoriy)" maxlength="300">
-            <button class="danger" data-act="block-confirm">Bloklash</button>
-          </div>
+          <div class="title">${esc(u.full_name) || "—"} ${u.is_blocked ? `<span class="badge danger">${tr("u_blocked").toLowerCase()}</span>` : ""}${u.registered ? `<span class="badge ok">${tr("registered")}</span>` : ""}</div>
+          <div class="meta">${u.username ? "@" + esc(u.username) + " · " : ""}ID ${u.telegram_id}${u.phone ? " · 📞 " + esc(u.phone) : ""}${u.lang ? " · " + u.lang.toUpperCase() : ""}</div>
+          ${u.is_blocked && u.block_reason ? `<div class="meta">${tr("reason")}: ${esc(u.block_reason)}</div>` : ""}
+          <div class="actions">${u.is_blocked ? `<button class="ok" data-act="unblock">${tr("unblock")}</button>` : `<button class="danger" data-act="block">${tr("block")}</button>`}</div>
+          <div class="reason hidden"><input maxlength="300" placeholder="${tr("block_reason")}"><button class="danger" data-act="block-confirm">${tr("block")}</button></div>
         </div>
       </div>`).join("");
   }
@@ -318,15 +330,9 @@
     btn.disabled = true;
     try {
       let upd;
-      if (btn.dataset.act === "block-confirm") {
-        const reason = card.querySelector(".reason input").value;
-        upd = await api(`/api/users/${id}/block`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) });
-        toast("Bloklandi");
-      } else {
-        upd = await api(`/api/users/${id}/unblock`, { method: "POST" }); toast("Blokdan chiqarildi");
-      }
-      haptic("success");
-      const i = users.findIndex((u) => u.telegram_id === id); if (i >= 0) users[i] = upd;
+      if (btn.dataset.act === "block-confirm") { upd = await api(`/api/users/${id}/block`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: card.querySelector(".reason input").value }) }); toast(tr("blocked")); }
+      else { upd = await api(`/api/users/${id}/unblock`, { method: "POST" }); toast(tr("unblocked")); }
+      haptic("success"); const i = users.findIndex((u) => u.telegram_id === id); if (i >= 0) users[i] = upd;
       if (userBlocked !== "all") await loadUsers(); else renderUsers();
     } catch (err) { haptic("error"); toast(err.message); btn.disabled = false; }
   });
@@ -334,24 +340,44 @@
   // ---------- stats ----------
   async function loadStats() {
     try {
-      const s = await api("/api/stats");
-      const ls = s.last_sync;
+      const s = await api("/api/stats"); const ls = s.last_sync;
       $("#stats-grid").innerHTML = [
-        ["👥 Klientlar", s.users_total], ["✅ Ro'yxatdan o'tgan", s.users_registered],
-        ["🚫 Bloklangan", s.users_blocked], ["❤️ Sevimlilar", s.favorites_total],
-        ["🏠 Jami e'lonlar", s.houses_total], ["🟢 Faol", s.houses_active],
-        ["🤖 Avtomatik e'lonlar", s.houses_joymee], ["✍️ Qo'lda qo'shilgan", s.houses_admin],
+        [tr("s_users"), s.users_total], [tr("s_registered"), s.users_registered], [tr("s_blocked"), s.users_blocked], [tr("s_favs"), s.favorites_total],
+        [tr("s_total"), s.houses_total], [tr("s_active"), s.houses_active], [tr("s_pending"), s.houses_pending], [tr("s_clients"), s.houses_clients],
+        [tr("s_auto"), s.houses_joymee], [tr("s_manual"), s.houses_admin], [tr("s_admins"), s.admins_total + " + " + (me && me.is_superadmin ? "★" : "")],
       ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")
-      + `<div class="stat" style="grid-column:1/-1"><div class="l">Oxirgi yangilanish</div><div style="font-size:13px;margin-top:4px">${ls ? `${new Date(ls.finished_at || ls.started_at).toLocaleString("uz")} — ko'rildi ${ls.seen}, yangi ${ls.added}, yangilandi ${ls.updated}, yopildi ${ls.deactivated}${ls.error ? `<br><span style="color:var(--danger)">Xato: ${esc(ls.error)}</span>` : ""}` : "hali yo'q"}<br>Avtomatik: ${s.sync_interval_min ? "har " + s.sync_interval_min + " daqiqada" : "o'chiq"}</div></div>`;
+      + `<div class="stat" style="grid-column:1/-1"><div class="l">${tr("s_last")}</div><div style="font-size:13px;margin-top:4px">${ls ? `${new Date(ls.finished_at || ls.started_at).toLocaleString()} — ${tr("s_seen")} ${ls.seen}, ${tr("s_new")} ${ls.added}, ${tr("s_upd")} ${ls.updated}, ${tr("s_closed")} ${ls.deactivated}${ls.error ? `<br><span style="color:var(--danger)">${tr("s_error")}: ${esc(ls.error)}</span>` : ""}` : tr("sync_never")}<br>${s.sync_interval_min ? tr("s_auto_every", { n: s.sync_interval_min }) : tr("s_auto_off")}</div></div>`;
     } catch (e) { $("#stats-grid").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
 
+  // ---------- admins (superadmin) ----------
+  async function loadAdmins() {
+    try {
+      const r = await api("/api/admins");
+      $("#admins-list").innerHTML = r.items.length ? r.items.map((a) => `
+        <div class="card"><div class="thumb">${a.superadmin ? "⭐" : "🛡"}</div>
+          <div class="body"><div class="title">${esc(a.full_name || a.note || "—")} ${a.superadmin ? `<span class="badge warn">${tr("a_super")}</span>` : ""}</div>
+            <div class="meta">${a.username ? "@" + esc(a.username) + " · " : ""}ID ${a.telegram_id}${a.note ? " · " + esc(a.note) : ""}</div>
+            ${a.superadmin ? "" : `<div class="actions"><button class="danger" data-rm="${a.telegram_id}">${tr("a_remove")}</button></div>`}</div></div>`).join("") : `<div class="empty">${tr("a_empty")}</div>`;
+      $("#admins-list").querySelectorAll("[data-rm]").forEach((b) => b.addEventListener("click", async () => {
+        if (!(await confirmDlg(tr("a_remove_confirm", { id: b.dataset.rm })))) return;
+        try { await api("/api/admins/" + b.dataset.rm, { method: "DELETE" }); toast(tr("a_removed")); loadAdmins(); } catch (e) { toast(e.message); }
+      }));
+    } catch (e) { $("#admins-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+  $("#a-add").addEventListener("click", async () => {
+    const b = $("#a-add"); b.disabled = true;
+    try { await api("/api/admins", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ telegram_id: $("#a-id").value.trim(), note: $("#a-note").value.trim() }) }); haptic("success"); toast(tr("a_added")); $("#a-id").value = ""; $("#a-note").value = ""; loadAdmins(); }
+    catch (e) { haptic("error"); toast(e.message); } finally { b.disabled = false; }
+  });
+
   // ---------- boot ----------
-  api("/api/me").then((me) => { $("#who").textContent = me.name; loadHouses(); })
-    .catch((e) => {
-      document.querySelectorAll("main > section").forEach((s) => s.classList.add("hidden"));
-      $("#gate").classList.remove("hidden"); $("#gate-msg").textContent = e.message; $("#fab").classList.add("hidden");
-    });
+  api("/api/me").then((m) => {
+    me = m; let saved = null; try { saved = localStorage.getItem("admin_lang"); } catch (e) {}
+    lang = I18N[saved] ? saved : (I18N[m.lang] ? m.lang : "uz"); applyI18n();
+    $("#who").textContent = m.name; if (m.is_superadmin) $("#tab-admins").classList.remove("hidden");
+    loadHouses();
+  }).catch((e) => { applyI18n(); document.querySelectorAll("main > section").forEach((s) => s.classList.add("hidden")); $("#gate").classList.remove("hidden"); $("#gate-msg").textContent = e.message; $("#fab").classList.add("hidden"); });
 })();
 </script>
 </body>

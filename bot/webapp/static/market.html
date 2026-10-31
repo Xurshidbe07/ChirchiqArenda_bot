@@ -15,8 +15,7 @@
     --btn: var(--tg-theme-button-color, #2481cc);
     --btn-text: var(--tg-theme-button-text-color, #ffffff);
     --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
-    --accent: #ff6f1f;
-    --ok: #30a46c; --danger: #e5484d;
+    --accent: #ff6f1f; --ok: #30a46c; --danger: #e5484d; --warn: #f5a524;
     --radius: 14px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -24,31 +23,29 @@
     font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
   .hidden { display: none !important; }
-  button { border: 0; border-radius: 10px; padding: 9px 13px; font: inherit; font-size: 14px; font-weight: 600;
-    cursor: pointer; background: var(--bg2); color: var(--text); }
+  button { border: 0; border-radius: 10px; padding: 9px 13px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: var(--bg2); color: var(--text); }
   button.primary { background: var(--btn); color: var(--btn-text); }
   button.accent { background: var(--accent); color: #fff; }
-  button.ghost { background: transparent; color: var(--link); }
+  button.danger { background: rgba(229,72,77,.12); color: var(--danger); }
   button:disabled { opacity: .5; }
-  input, select, textarea { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,.08);
-    background: var(--card); color: var(--text); font: inherit; outline: none; }
+  input, select, textarea { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,.08); background: var(--card); color: var(--text); font: inherit; outline: none; }
+  textarea { min-height: 80px; resize: vertical; }
   label { display: block; font-size: 13px; color: var(--hint); margin: 10px 0 4px; }
   .center { text-align: center; color: var(--hint); padding: 40px 16px; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+  .err { color: var(--danger); font-size: 13px; margin-top: 8px; min-height: 18px; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; color: #fff; font-weight: 600; }
+  .badge.pending { background: var(--warn); } .badge.approved { background: var(--ok); } .badge.rejected { background: var(--danger); }
 
-  /* header */
   header { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 10px 14px 8px; box-shadow: 0 1px 0 rgba(0,0,0,.06); }
   .brand { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .brand h1 { margin: 0; font-size: 18px; } .brand h1 span { color: var(--accent); }
   .brand small { color: var(--hint); font-size: 12px; }
-  .searchrow { display: flex; gap: 8px; }
-  .searchrow input { flex: 1; background: var(--bg2); border: 0; }
-  .searchrow button { padding: 0 14px; }
-  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 0; scrollbar-width: none; }
-  .chips::-webkit-scrollbar { display: none; }
+  .searchrow { display: flex; gap: 8px; } .searchrow input { flex: 1; background: var(--bg2); border: 0; } .searchrow button { padding: 0 14px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 0; scrollbar-width: none; } .chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; padding: 6px 12px; border-radius: 999px; background: var(--bg2); color: var(--text); font-size: 13px; cursor: pointer; white-space: nowrap; }
   .chip.active { background: var(--btn); color: var(--btn-text); }
 
-  /* grid */
   main { padding: 10px 12px; }
   .count { color: var(--hint); font-size: 13px; margin: 2px 2px 8px; display: flex; justify-content: space-between; align-items: center; }
   .count select { width: auto; padding: 4px 8px; font-size: 13px; border: 0; background: transparent; color: var(--link); }
@@ -56,37 +53,30 @@
   .item { background: var(--card); border-radius: var(--radius); overflow: hidden; cursor: pointer; position: relative; display: flex; flex-direction: column; }
   .item .img { aspect-ratio: 4/3; background: var(--bg2) center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 34px; }
   .item .fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.9); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .item .st { position: absolute; top: 8px; left: 8px; }
   .item .b { padding: 8px 10px 10px; }
-  .item .price { font-weight: 700; font-size: 15px; }
-  .item .price small { color: var(--hint); font-weight: 500; font-size: 11px; }
+  .item .price { font-weight: 700; font-size: 15px; } .item .price small { color: var(--hint); font-weight: 500; font-size: 11px; }
   .item .t { font-size: 13px; margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 36px; }
   .item .m { color: var(--hint); font-size: 12px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .more { width: 100%; margin-top: 12px; padding: 12px; }
 
-  /* bottom nav */
-  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; background: var(--bg); box-shadow: 0 -1px 0 rgba(0,0,0,.08);
-    padding-bottom: env(safe-area-inset-bottom); }
+  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; background: var(--bg); box-shadow: 0 -1px 0 rgba(0,0,0,.08); padding-bottom: env(safe-area-inset-bottom); }
   nav div { flex: 1; text-align: center; padding: 8px 0 6px; font-size: 11px; color: var(--hint); cursor: pointer; }
-  nav div b { display: block; font-size: 20px; font-weight: 400; }
-  nav div.active { color: var(--link); }
+  nav div b { display: block; font-size: 20px; font-weight: 400; } nav div.active { color: var(--link); }
+  nav div.post b { background: var(--accent); color: #fff; border-radius: 50%; width: 30px; height: 30px; line-height: 30px; margin: -3px auto 2px; font-size: 22px; }
 
-  /* sheet / detail */
-  .sheet { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow: auto; display: flex; flex-direction: column; }
+  .sheet { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow: auto; }
   .gallery { position: relative; background: #000; }
-  .gallery .track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-  .gallery .track::-webkit-scrollbar { display: none; }
+  .gallery .track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; } .gallery .track::-webkit-scrollbar { display: none; }
   .gallery img { width: 100%; flex: none; aspect-ratio: 4/3; object-fit: contain; scroll-snap-align: start; background: #000; }
   .gallery .dots { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 12px; color: #fff; text-shadow: 0 0 4px #000; }
   .gallery .back { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.5); color: #fff; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
   .gallery .favbtn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,.92); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
   .d { padding: 14px 16px 120px; }
   .d .price { font-size: 24px; font-weight: 800; } .d .price small { font-size: 13px; color: var(--hint); font-weight: 500; }
-  .d h2 { margin: 6px 0 4px; font-size: 17px; }
-  .d .meta { color: var(--hint); font-size: 13px; }
+  .d h2 { margin: 6px 0 4px; font-size: 17px; } .d .meta { color: var(--hint); font-size: 13px; }
   .params { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin: 14px 0; }
-  .params div { background: var(--bg2); border-radius: 10px; padding: 8px 10px; }
-  .params div small { display: block; color: var(--hint); font-size: 11px; }
-  .params div b { font-size: 14px; }
+  .params div { background: var(--bg2); border-radius: 10px; padding: 8px 10px; } .params div small { display: block; color: var(--hint); font-size: 11px; } .params div b { font-size: 14px; }
   .desc { white-space: pre-wrap; line-height: 1.5; font-size: 14px; }
   .seller { display: flex; align-items: center; gap: 10px; background: var(--bg2); border-radius: 12px; padding: 10px 12px; margin-top: 14px; }
   .seller .av { width: 38px; height: 38px; border-radius: 50%; background: var(--card); display: flex; align-items: center; justify-content: center; }
@@ -94,127 +84,224 @@
   .cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--bg); padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; box-shadow: 0 -1px 0 rgba(0,0,0,.08); }
   .cta button { flex: 1; padding: 13px; font-size: 15px; }
 
-  /* registration */
-  .reg { padding: 24px 18px; max-width: 480px; margin: 0 auto; }
-  .reg h2 { margin: 0 0 4px; } .reg p { color: var(--hint); margin: 0 0 14px; font-size: 14px; }
+  .page { padding: 18px 16px 90px; max-width: 520px; margin: 0 auto; }
+  .page h2 { margin: 0 0 4px; } .page p.sub { color: var(--hint); margin: 0 0 14px; font-size: 14px; }
   .roles { display: flex; gap: 8px; } .roles div { flex: 1; border: 2px solid transparent; background: var(--card); border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; }
   .roles div.active { border-color: var(--btn); } .roles div b { display: block; font-size: 22px; }
-  .reg .actions { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; } .reg .actions button { padding: 13px; font-size: 15px; }
-  .err { color: var(--danger); font-size: 13px; margin-top: 8px; min-height: 18px; }
-
-  /* filters sheet */
+  .actions { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; } .actions button { padding: 13px; font-size: 15px; }
   .fsheet { position: fixed; inset: 0; z-index: 35; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; }
   .fbody { background: var(--bg); width: 100%; border-radius: 18px 18px 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
-  .fbody h3 { margin: 0 0 6px; }
-  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
-  .fbody .actions { display: flex; gap: 8px; margin-top: 16px; } .fbody .actions button { flex: 1; padding: 12px; }
-
-  /* profile */
-  .prof { padding: 16px; } .prof .card { background: var(--card); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
-  .prof .card .k { color: var(--hint); font-size: 12px; } .prof .card .v { font-weight: 600; }
-
-  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 60; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .fbody h3 { margin: 0 0 6px; } .fbody .actions { flex-direction: row; } .fbody .actions button { flex: 1; padding: 12px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .card .k { color: var(--hint); font-size: 12px; } .card .v { font-weight: 600; }
+  .langs { display: flex; gap: 6px; } .langs button { flex: 1; } .langs button.active { background: var(--btn); color: var(--btn-text); }
+  .myad { display: flex; gap: 10px; background: var(--card); border-radius: var(--radius); padding: 10px; margin-bottom: 10px; align-items: flex-start; }
+  .myad .th { width: 64px; height: 64px; border-radius: 10px; background: var(--bg2) center/cover; flex: none; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .myad .bd { flex: 1; min-width: 0; } .myad .t { font-weight: 600; font-size: 14px; } .myad .m { color: var(--hint); font-size: 12px; margin-top: 2px; }
+  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 60; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; text-align: center; }
   .toast.show { opacity: .95; }
 </style>
 </head>
 <body>
 
-<!-- ======== registratsiya ======== -->
-<section id="reg" class="reg hidden">
-  <h2>👋 Xush kelibsiz!</h2>
-  <p>Chirchiq bo'yicha ijara uylarini ko'rish uchun qisqa ro'yxatdan o'ting.</p>
-  <label>Ismingiz</label>
-  <input id="r-name" maxlength="100" placeholder="Ism Familiya">
-  <label>Kimsiz?</label>
+<!-- registratsiya -->
+<section id="reg" class="page hidden">
+  <h2 data-i="reg_title"></h2>
+  <p class="sub" id="reg-sub"></p>
+  <label data-i="name"></label>
+  <input id="r-name" maxlength="100">
+  <label data-i="who"></label>
   <div class="roles">
-    <div data-role="tenant" class="active"><b>🔑</b>Ijarachi<br><small style="color:var(--hint)">uy qidiryapman</small></div>
-    <div data-role="landlord"><b>🏠</b>Uy egasi<br><small style="color:var(--hint)">uyim bor</small></div>
+    <div data-role="tenant" class="active"><b>🔑</b><span data-i="tenant"></span><br><small style="color:var(--hint)" data-i="tenant_sub"></small></div>
+    <div data-role="landlord"><b>🏠</b><span data-i="landlord"></span><br><small style="color:var(--hint)" data-i="landlord_sub"></small></div>
   </div>
-  <label>Telefon raqam</label>
+  <label data-i="phone"></label>
   <input id="r-phone" inputmode="tel" placeholder="+998 90 123 45 67">
   <div class="err" id="r-err"></div>
   <div class="actions">
-    <button class="primary" id="r-contact">📱 Telegram raqamimni ulashish</button>
-    <button id="r-submit">Davom etish</button>
+    <button class="primary" id="r-contact" data-i="share_contact"></button>
+    <button id="r-submit" data-i="continue"></button>
+    <button id="r-cancel" data-i="cancel"></button>
   </div>
 </section>
 
-<!-- ======== asosiy ======== -->
+<!-- e'lon berish -->
+<section id="post" class="page hidden">
+  <h2 data-i="post_title"></h2>
+  <p class="sub" data-i="post_sub"></p>
+  <form id="post-form">
+    <label><span data-i="p_title"></span> *</label><input name="title" required maxlength="120">
+    <label><span data-i="p_address"></span> *</label><input name="address" required maxlength="250">
+    <label data-i="p_district"></label><input name="district" maxlength="80" list="districts"><datalist id="districts"></datalist>
+    <div class="row">
+      <div><label><span data-i="p_rooms"></span> *</label><input name="rooms" type="number" min="1" max="50" required></div>
+      <div><label data-i="p_area"></label><input name="area" type="number" min="1" step="0.1"></div>
+    </div>
+    <div class="row">
+      <div><label data-i="p_floor"></label><input name="floor" type="number" min="0" max="200"></div>
+      <div><label data-i="p_floors"></label><input name="floors" type="number" min="1" max="200"></div>
+    </div>
+    <div class="row">
+      <div><label><span data-i="p_price"></span> *</label><input name="price" type="number" min="0" required></div>
+      <div><label data-i="p_currency"></label><select name="currency"><option value="UZS">so'm</option><option value="USD">y.e ($)</option></select></div>
+    </div>
+    <label data-i="p_phone"></label><input name="contact_phone" maxlength="30">
+    <label data-i="p_desc"></label><textarea name="description" maxlength="1500"></textarea>
+    <label data-i="p_photos"></label><input name="photos" type="file" accept="image/*" multiple>
+    <div class="err" id="p-err"></div>
+    <div class="actions">
+      <button type="submit" class="accent" id="p-submit" data-i="p_submit"></button>
+      <button type="button" id="p-cancel" data-i="cancel"></button>
+    </div>
+  </form>
+</section>
+
+<!-- asosiy -->
 <div id="app" class="hidden">
 <header>
-  <div class="brand">
-    <h1>Chirchiq <span>Arenda</span></h1>
-    <small id="who"></small>
-  </div>
-  <div class="searchrow" id="searchrow">
-    <input id="q" placeholder="Qidirish: mavze, xona, narx...">
-    <button id="fbtn">⚙️ Filtr</button>
-  </div>
+  <div class="brand"><h1>Chirchiq <span>Arenda</span></h1><small id="who"></small></div>
+  <div class="searchrow"><input id="q"><button id="fbtn"></button></div>
   <div class="chips" id="roomchips">
-    <span class="chip active" data-rooms="">Hammasi</span>
-    <span class="chip" data-rooms="1">1 xona</span>
-    <span class="chip" data-rooms="2">2 xona</span>
-    <span class="chip" data-rooms="3">3 xona</span>
-    <span class="chip" data-rooms="4">4+ xona</span>
+    <span class="chip active" data-rooms="" data-i="c_all"></span>
+    <span class="chip" data-rooms="1" data-i="c_r1"></span>
+    <span class="chip" data-rooms="2" data-i="c_r2"></span>
+    <span class="chip" data-rooms="3" data-i="c_r3"></span>
+    <span class="chip" data-rooms="4" data-i="c_r4"></span>
   </div>
 </header>
-
 <main>
   <section id="page-feed">
     <div class="count"><span id="cnt"></span>
-      <select id="sort">
-        <option value="new">Eng yangi</option>
-        <option value="cheap">Arzon → qimmat</option>
-        <option value="expensive">Qimmat → arzon</option>
-        <option value="popular">Ommabop</option>
-      </select></div>
+      <select id="sort"><option value="new" data-i="s_new"></option><option value="cheap" data-i="s_cheap"></option><option value="expensive" data-i="s_expensive"></option><option value="popular" data-i="s_popular"></option></select></div>
     <div class="grid" id="grid"></div>
-    <button class="more hidden" id="more">Yana ko'rsatish</button>
+    <button class="more hidden" id="more" data-i="more"></button>
   </section>
   <section id="page-fav" class="hidden">
-    <div class="count"><span>❤️ Sevimlilar</span></div>
+    <div class="count"><span data-i="favs_title"></span></div>
     <div class="grid" id="favgrid"></div>
   </section>
-  <section id="page-prof" class="hidden prof"></section>
+  <section id="page-prof" class="hidden"></section>
 </main>
-
 <nav>
-  <div class="active" data-page="feed"><b>🏠</b>Uylar</div>
-  <div data-page="fav"><b>❤️</b>Sevimlilar</div>
-  <div data-page="prof"><b>👤</b>Profil</div>
+  <div class="active" data-page="feed"><b>🏠</b><span data-i="n_houses"></span></div>
+  <div data-page="fav"><b>❤️</b><span data-i="n_favs"></span></div>
+  <div class="post" data-page="post"><b>+</b><span data-i="n_post"></span></div>
+  <div data-page="prof"><b>👤</b><span data-i="n_profile"></span></div>
 </nav>
 </div>
 
-<div id="gate" class="center hidden">⚠️ Bu sahifa faqat Telegram ichida ochiladi.<div id="gate-msg" style="margin-top:8px;font-size:13px"></div></div>
+<div id="gate" class="center hidden">⚠️ <span data-i="gate"></span><div id="gate-msg" style="margin-top:8px;font-size:13px"></div></div>
 <div id="detail" class="sheet hidden"></div>
 <div id="fsheet" class="fsheet hidden">
   <div class="fbody">
-    <h3>Filtrlar</h3>
-    <label>Narx (so'm / oy)</label>
-    <div class="row"><input id="f-min" inputmode="numeric" placeholder="dan"><input id="f-max" inputmode="numeric" placeholder="gacha"></div>
-    <label>Mavze / tuman</label>
-    <select id="f-district"><option value="">Hammasi</option></select>
-    <div class="actions"><button id="f-reset">Tozalash</button><button class="primary" id="f-apply">Ko'rsatish</button></div>
+    <h3 data-i="f_title"></h3>
+    <label data-i="f_price"></label>
+    <div class="row"><input id="f-min" inputmode="numeric"><input id="f-max" inputmode="numeric"></div>
+    <label data-i="f_district"></label>
+    <select id="f-district"></select>
+    <div class="actions"><button id="f-reset" data-i="f_reset"></button><button class="primary" id="f-apply" data-i="f_apply"></button></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
 (() => {
+  // ================= i18n =================
+  const I18N = {
+    uz: {
+      gate: "Bu sahifa faqat Telegram ichida ochiladi.", search_ph: "Qidirish: mavze, xona, narx...", filter: "⚙️ Filtr", filter_on: "⚙️ Filtr •",
+      c_all: "Hammasi", c_r1: "1 xona", c_r2: "2 xona", c_r3: "3 xona", c_r4: "4+ xona",
+      s_new: "Eng yangi", s_cheap: "Arzon → qimmat", s_expensive: "Qimmat → arzon", s_popular: "Ommabop",
+      count: "{n} ta e'lon", more: "Yana ko'rsatish", loading: "Yuklanmoqda…", empty: "E'lonlar topilmadi", favs_title: "❤️ Sevimlilar",
+      n_houses: "Uylar", n_favs: "Sevimlilar", n_post: "E'lon berish", n_profile: "Profil",
+      per_month: "/ oy", rooms: "xona", now: "hozirgina", hours: "{n} soat oldin", yesterday: "kecha", days: "{n} kun oldin",
+      d_rooms: "Xonalar", d_area: "Maydon", d_floor: "Qavat", d_district: "Mavze", no_desc: "Tavsif yo'q.", owner: "Uy egasi / rieltor",
+      call: "📞 Qo'ng'iroq qilish", no_phone: "Telefon ko'rsatilmagan", close: "Yopish",
+      st_pending: "moderatsiyada", st_approved: "tasdiqlangan", st_rejected: "rad etilgan", reason: "Sabab",
+      reg_title: "👋 Xush kelibsiz!", reg_sub: "Davom etish uchun qisqa ro'yxatdan o'ting.", reg_sub_post: "E'lon berish uchun avval ro'yxatdan o'ting.",
+      name: "Ismingiz", who: "Kimsiz?", tenant: "Ijarachi", tenant_sub: "uy qidiryapman", landlord: "Uy egasi", landlord_sub: "uyim bor",
+      phone: "Telefon raqam", share_contact: "📱 Telegram raqamimni ulashish", continue: "Davom etish", cancel: "Bekor qilish",
+      err_name: "Ismingizni kiriting.", err_phone: "Telefon raqam +998XXXXXXXXX ko'rinishida bo'lsin.", err_contact: "Raqam ulashilmadi. Qo'lda kiriting.", err_role: "Kimligingizni tanlang.", err_browser: "Telegram ichida ishlaydi. Raqamni qo'lda kiriting.",
+      post_title: "➕ E'lon berish", post_sub: "E'lon admin tekshiruvidan keyin bozorda ko'rinadi.",
+      p_title: "Sarlavha", p_address: "Manzil", p_district: "Mavze / tuman", p_rooms: "Xonalar", p_area: "Maydon, m²", p_floor: "Qavat", p_floors: "Uy qavatlari",
+      p_price: "Narx (oyiga)", p_currency: "Valyuta", p_phone: "Telefon", p_desc: "Tavsif", p_photos: "Rasmlar (8 tagacha)", p_submit: "Moderatsiyaga yuborish", p_sending: "Yuborilmoqda…", p_sent: "E'lon yuborildi! Tekshiruvdan keyin bozorda chiqadi.",
+      my_title: "📋 Mening e'lonlarim", my_empty: "Hali e'lon bermagansiz.", delete: "🗑 O'chirish", delete_confirm: "E'lon o'chirilsinmi?", deleted: "O'chirildi",
+      pr_name: "Ism", pr_phone: "Telefon", pr_role: "Rol", pr_tg: "Telegram", pr_edit: "✏️ Ma'lumotlarni o'zgartirish", pr_register: "📝 Ro'yxatdan o'tish", pr_not_registered: "Ro'yxatdan o'tmagansiz", pr_lang: "🌐 Til", pr_info: "E'lonlar muntazam yangilanib turadi. Kurs: 1 y.e = {rate} so'm.",
+      f_title: "Filtrlar", f_price: "Narx (so'm / oy)", f_from: "dan", f_to: "gacha", f_district: "Mavze / tuman", f_all: "Hammasi", f_reset: "Tozalash", f_apply: "Ko'rsatish",
+      fav_on: "Sevimlilarga qo'shildi", fav_off: "Sevimlilardan olindi", lang_saved: "Til saqlandi", reg_saved: "Saqlandi ✅",
+    },
+    ru: {
+      gate: "Эта страница открывается только в Telegram.", search_ph: "Поиск: район, комнаты, цена...", filter: "⚙️ Фильтр", filter_on: "⚙️ Фильтр •",
+      c_all: "Все", c_r1: "1 комн.", c_r2: "2 комн.", c_r3: "3 комн.", c_r4: "4+ комн.",
+      s_new: "Сначала новые", s_cheap: "Дешевле → дороже", s_expensive: "Дороже → дешевле", s_popular: "Популярные",
+      count: "{n} объявлений", more: "Показать ещё", loading: "Загрузка…", empty: "Объявлений не найдено", favs_title: "❤️ Избранное",
+      n_houses: "Жильё", n_favs: "Избранное", n_post: "Подать", n_profile: "Профиль",
+      per_month: "/ мес", rooms: "комн.", now: "только что", hours: "{n} ч. назад", yesterday: "вчера", days: "{n} дн. назад",
+      d_rooms: "Комнаты", d_area: "Площадь", d_floor: "Этаж", d_district: "Район", no_desc: "Описания нет.", owner: "Владелец / риелтор",
+      call: "📞 Позвонить", no_phone: "Телефон не указан", close: "Закрыть",
+      st_pending: "на модерации", st_approved: "одобрено", st_rejected: "отклонено", reason: "Причина",
+      reg_title: "👋 Добро пожаловать!", reg_sub: "Пройдите короткую регистрацию, чтобы продолжить.", reg_sub_post: "Чтобы подать объявление, сначала зарегистрируйтесь.",
+      name: "Ваше имя", who: "Кто вы?", tenant: "Арендатор", tenant_sub: "ищу жильё", landlord: "Владелец", landlord_sub: "сдаю жильё",
+      phone: "Номер телефона", share_contact: "📱 Поделиться номером Telegram", continue: "Продолжить", cancel: "Отмена",
+      err_name: "Введите имя.", err_phone: "Номер в формате +998XXXXXXXXX.", err_contact: "Номер не передан. Введите вручную.", err_role: "Выберите, кто вы.", err_browser: "Работает только в Telegram. Введите номер вручную.",
+      post_title: "➕ Подать объявление", post_sub: "Объявление появится после проверки администратором.",
+      p_title: "Заголовок", p_address: "Адрес", p_district: "Район", p_rooms: "Комнат", p_area: "Площадь, м²", p_floor: "Этаж", p_floors: "Этажей в доме",
+      p_price: "Цена (в месяц)", p_currency: "Валюта", p_phone: "Телефон", p_desc: "Описание", p_photos: "Фото (до 8)", p_submit: "Отправить на модерацию", p_sending: "Отправка…", p_sent: "Объявление отправлено! Появится после проверки.",
+      my_title: "📋 Мои объявления", my_empty: "Вы ещё не подавали объявлений.", delete: "🗑 Удалить", delete_confirm: "Удалить объявление?", deleted: "Удалено",
+      pr_name: "Имя", pr_phone: "Телефон", pr_role: "Роль", pr_tg: "Telegram", pr_edit: "✏️ Изменить данные", pr_register: "📝 Зарегистрироваться", pr_not_registered: "Вы не зарегистрированы", pr_lang: "🌐 Язык", pr_info: "Объявления регулярно обновляются. Курс: 1 у.е. = {rate} сум.",
+      f_title: "Фильтры", f_price: "Цена (сум / мес)", f_from: "от", f_to: "до", f_district: "Район", f_all: "Все", f_reset: "Сбросить", f_apply: "Показать",
+      fav_on: "Добавлено в избранное", fav_off: "Удалено из избранного", lang_saved: "Язык сохранён", reg_saved: "Сохранено ✅",
+    },
+    en: {
+      gate: "This page opens only inside Telegram.", search_ph: "Search: area, rooms, price...", filter: "⚙️ Filter", filter_on: "⚙️ Filter •",
+      c_all: "All", c_r1: "1 room", c_r2: "2 rooms", c_r3: "3 rooms", c_r4: "4+ rooms",
+      s_new: "Newest", s_cheap: "Cheap → expensive", s_expensive: "Expensive → cheap", s_popular: "Popular",
+      count: "{n} listings", more: "Show more", loading: "Loading…", empty: "No listings found", favs_title: "❤️ Favorites",
+      n_houses: "Housing", n_favs: "Favorites", n_post: "Post", n_profile: "Profile",
+      per_month: "/ month", rooms: "rooms", now: "just now", hours: "{n} h ago", yesterday: "yesterday", days: "{n} d ago",
+      d_rooms: "Rooms", d_area: "Area", d_floor: "Floor", d_district: "District", no_desc: "No description.", owner: "Owner / agent",
+      call: "📞 Call", no_phone: "No phone provided", close: "Close",
+      st_pending: "under review", st_approved: "approved", st_rejected: "rejected", reason: "Reason",
+      reg_title: "👋 Welcome!", reg_sub: "Complete a short registration to continue.", reg_sub_post: "Please register before posting a listing.",
+      name: "Your name", who: "Who are you?", tenant: "Tenant", tenant_sub: "looking for housing", landlord: "Landlord", landlord_sub: "I rent out",
+      phone: "Phone number", share_contact: "📱 Share my Telegram number", continue: "Continue", cancel: "Cancel",
+      err_name: "Enter your name.", err_phone: "Phone must look like +998XXXXXXXXX.", err_contact: "Number not shared. Enter it manually.", err_role: "Choose who you are.", err_browser: "Works only inside Telegram. Enter the number manually.",
+      post_title: "➕ Post a listing", post_sub: "Your listing appears after an admin review.",
+      p_title: "Title", p_address: "Address", p_district: "District / area", p_rooms: "Rooms", p_area: "Area, m²", p_floor: "Floor", p_floors: "Floors in building",
+      p_price: "Price (per month)", p_currency: "Currency", p_phone: "Phone", p_desc: "Description", p_photos: "Photos (up to 8)", p_submit: "Submit for review", p_sending: "Sending…", p_sent: "Listing sent! It will appear after review.",
+      my_title: "📋 My listings", my_empty: "You haven't posted anything yet.", delete: "🗑 Delete", delete_confirm: "Delete this listing?", deleted: "Deleted",
+      pr_name: "Name", pr_phone: "Phone", pr_role: "Role", pr_tg: "Telegram", pr_edit: "✏️ Edit details", pr_register: "📝 Register", pr_not_registered: "Not registered", pr_lang: "🌐 Language", pr_info: "Listings are updated regularly. Rate: 1 USD = {rate} UZS.",
+      f_title: "Filters", f_price: "Price (UZS / month)", f_from: "from", f_to: "to", f_district: "District", f_all: "All", f_reset: "Reset", f_apply: "Apply",
+      fav_on: "Added to favorites", fav_off: "Removed from favorites", lang_saved: "Language saved", reg_saved: "Saved ✅",
+    },
+  };
+  const LANG_NAMES = { uz: "🇺🇿 O'zbekcha", ru: "🇷🇺 Русский", en: "🇬🇧 English" };
+  let lang = "uz";
+  const tr = (k, vars) => { let s = (I18N[lang] && I18N[lang][k]) || I18N.uz[k] || k; if (vars) for (const v in vars) s = s.replace("{" + v + "}", vars[v]); return s; };
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = tr(el.dataset.i); });
+    $("#q").placeholder = tr("search_ph"); $("#fbtn").textContent = filtersOn() ? tr("filter_on") : tr("filter");
+    $("#f-min").placeholder = tr("f_from"); $("#f-max").placeholder = tr("f_to");
+    $("#r-name").placeholder = tr("name");
+  }
+
+  // ================= asoslar =================
   const tg = window.Telegram && window.Telegram.WebApp;
   const initData = tg ? tg.initData : "";
   if (tg) { tg.ready(); tg.expand(); }
   const inTelegram = !!(tg && tg.platform && tg.platform !== "unknown" && tg.initDataUnsafe && tg.initDataUnsafe.query_id);
-
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const money = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const priceStr = (h) => h.currency === "USD" ? `${money(h.price)} y.e` : `${money(h.price)} so'm`;
   const uzsStr = (h) => h.currency === "USD" && h.price_uzs ? `≈ ${money(h.price_uzs)} so'm` : "";
-  const ago = (iso) => { const d = (Date.now() - new Date(iso)) / 36e5; if (d < 1) return "hozirgina"; if (d < 24) return `${Math.floor(d)} soat oldin`; const days = Math.floor(d / 24); return days === 1 ? "kecha" : `${days} kun oldin`; };
-  let toastTimer; function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200); }
+  const ago = (iso) => { const d = (Date.now() - new Date(iso)) / 36e5; if (d < 1) return tr("now"); if (d < 24) return tr("hours", { n: Math.floor(d) }); const days = Math.floor(d / 24); return days === 1 ? tr("yesterday") : tr("days", { n: days }); };
+  let toastTimer; function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2400); }
   const haptic = (t) => { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(t); } catch (e) {} };
   const photo = (u) => u.startsWith("/api/photo/") ? u + "?_auth=" + encodeURIComponent(initData) : u;
+  const confirmDlg = (msg) => new Promise((res) => { if (inTelegram && tg.showConfirm) tg.showConfirm(msg, res); else res(window.confirm(msg)); });
+  const errText = (e) => ({ REGISTER_REQUIRED: tr("reg_sub_post"), NAME_REQUIRED: tr("err_name"), ROLE_REQUIRED: tr("err_role"), PHONE_INVALID: tr("err_phone"), NOT_FOUND: tr("empty") }[e.message.split(":")[0]] || e.message);
 
   async function api(path, opts = {}) {
     const headers = Object.assign({ Authorization: "tma " + initData }, opts.headers || {});
@@ -222,102 +309,113 @@
     if (!r.ok) { const e = new Error((await r.text()) || "HTTP " + r.status); e.status = r.status; throw e; }
     return r.json();
   }
+  if (!initData) { $("#gate").classList.remove("hidden"); applyI18n(); return; }
 
-  if (!initData) { $("#gate").classList.remove("hidden"); return; }
+  let me = null, role = "tenant", afterReg = null;
+  const state = { q: "", rooms: "", min: "", max: "", district: "", sort: "new", page: 0, items: [], favs: [] };
+  const filtersOn = () => !!(state.min || state.max || state.district);
 
-  // ================= registratsiya =================
-  let me = null, role = "tenant";
-  document.querySelectorAll(".roles div").forEach((d) => d.addEventListener("click", () => {
-    document.querySelectorAll(".roles div").forEach((x) => x.classList.toggle("active", x === d)); role = d.dataset.role;
-  }));
-  async function register(payload) {
-    $("#r-err").textContent = "";
-    const name = $("#r-name").value.trim();
-    if (name.length < 2) { $("#r-err").textContent = "Ismingizni kiriting."; return; }
-    try {
-      me = await api("/api/market/register", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(Object.assign({ full_name: name, role }, payload)) });
-      haptic("success"); showApp();
-    } catch (e) { haptic("error"); $("#r-err").textContent = e.message; }
+  // ================= sahifalar =================
+  function show(page) {
+    ["reg", "post", "app"].forEach((id) => $("#" + id).classList.toggle("hidden", id !== page));
+    window.scrollTo(0, 0);
   }
-  $("#r-submit").addEventListener("click", () => register({ phone: $("#r-phone").value }));
-  $("#r-contact").addEventListener("click", () => {
-    if (!(inTelegram && tg.requestContact)) { $("#r-err").textContent = "Telegram ichida ishlaydi. Raqamni qo'lda kiriting."; return; }
-    tg.requestContact((ok, resp) => {
-      if (!ok) { $("#r-err").textContent = "Raqam ulashilmadi."; return; }
-      register({ contact_response: resp && resp.response });
-    });
-  });
-  if (!inTelegram) $("#r-contact").classList.add("hidden");
-
-  // ================= asosiy =================
-  const state = { q: "", rooms: "", min: "", max: "", district: "", source: "", sort: "new", page: 0, items: [], favs: [] };
-
-  function showApp() {
-    $("#reg").classList.add("hidden"); $("#app").classList.remove("hidden");
-    $("#who").textContent = me.full_name || "";
-    loadDistricts(); loadFeed(true);
+  function showApp(tab) {
+    show("app"); $("#who").textContent = me.registered ? me.full_name : "";
+    if (tab) selectTab(tab);
   }
-
-  // tabs
-  document.querySelectorAll("nav div").forEach((t) => t.addEventListener("click", () => {
-    document.querySelectorAll("nav div").forEach((x) => x.classList.toggle("active", x === t));
-    const p = t.dataset.page;
+  function selectTab(p) {
+    document.querySelectorAll("nav div").forEach((x) => x.classList.toggle("active", x.dataset.page === p));
     $("#page-feed").classList.toggle("hidden", p !== "feed"); $("#page-fav").classList.toggle("hidden", p !== "fav"); $("#page-prof").classList.toggle("hidden", p !== "prof");
     $("header").classList.toggle("hidden", p !== "feed");
     if (p === "fav") loadFavs(); if (p === "prof") renderProfile();
+  }
+  document.querySelectorAll("nav div").forEach((t) => t.addEventListener("click", () => {
+    if (t.dataset.page === "post") { openPost(); return; }
+    selectTab(t.dataset.page);
   }));
 
-  // search / chips / sort
+  // ================= registratsiya =================
+  document.querySelectorAll(".roles div").forEach((d) => d.addEventListener("click", () => { document.querySelectorAll(".roles div").forEach((x) => x.classList.toggle("active", x === d)); role = d.dataset.role; }));
+  function openReg(forPost) {
+    afterReg = forPost ? "post" : null;
+    $("#reg-sub").textContent = forPost ? tr("reg_sub_post") : tr("reg_sub");
+    $("#r-name").value = me.full_name || me.tg_name || ""; $("#r-phone").value = me.phone || ""; $("#r-err").textContent = "";
+    role = me.role || "tenant"; document.querySelectorAll(".roles div").forEach((x) => x.classList.toggle("active", x.dataset.role === role));
+    $("#r-contact").classList.toggle("hidden", !inTelegram);
+    show("reg");
+  }
+  async function register(payload) {
+    $("#r-err").textContent = "";
+    const name = $("#r-name").value.trim();
+    if (name.length < 2) { $("#r-err").textContent = tr("err_name"); return; }
+    try {
+      const u = await api("/api/market/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ full_name: name, role }, payload)) });
+      Object.assign(me, u); haptic("success"); toast(tr("reg_saved"));
+      if (afterReg === "post") { afterReg = null; openPost(); } else showApp("prof");
+    } catch (e) { haptic("error"); $("#r-err").textContent = errText(e); }
+  }
+  $("#r-submit").addEventListener("click", () => register({ phone: $("#r-phone").value }));
+  $("#r-cancel").addEventListener("click", () => showApp());
+  $("#r-contact").addEventListener("click", () => {
+    if (!(inTelegram && tg.requestContact)) { $("#r-err").textContent = tr("err_browser"); return; }
+    tg.requestContact((ok, resp) => { if (!ok) { $("#r-err").textContent = tr("err_contact"); return; } register({ contact_response: resp && resp.response }); });
+  });
+
+  // ================= e'lon berish =================
+  function openPost() {
+    if (!me.registered) { openReg(true); return; }
+    const f = $("#post-form"); f.reset(); f.contact_phone.value = me.phone || ""; $("#p-err").textContent = "";
+    show("post");
+  }
+  $("#p-cancel").addEventListener("click", () => showApp());
+  $("#post-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const b = $("#p-submit"); b.disabled = true; b.textContent = tr("p_sending"); $("#p-err").textContent = "";
+    try {
+      await api("/api/market/my", { method: "POST", body: new FormData($("#post-form")) });
+      haptic("success"); toast(tr("p_sent")); showApp("prof");
+    } catch (err) { haptic("error"); $("#p-err").textContent = errText(err); }
+    finally { b.disabled = false; b.textContent = tr("p_submit"); }
+  });
+
+  // ================= lenta =================
   let qTimer; $("#q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = $("#q").value; loadFeed(true); }, 350); });
-  document.querySelectorAll("#roomchips .chip").forEach((c) => c.addEventListener("click", () => {
-    document.querySelectorAll("#roomchips .chip").forEach((x) => x.classList.toggle("active", x === c)); state.rooms = c.dataset.rooms; loadFeed(true);
-  }));
+  document.querySelectorAll("#roomchips .chip").forEach((c) => c.addEventListener("click", () => { document.querySelectorAll("#roomchips .chip").forEach((x) => x.classList.toggle("active", x === c)); state.rooms = c.dataset.rooms; loadFeed(true); }));
   $("#sort").addEventListener("change", () => { state.sort = $("#sort").value; loadFeed(true); });
   $("#more").addEventListener("click", () => loadFeed(false));
-
-  // filters sheet
   $("#fbtn").addEventListener("click", () => $("#fsheet").classList.remove("hidden"));
   $("#fsheet").addEventListener("click", (e) => { if (e.target === $("#fsheet")) $("#fsheet").classList.add("hidden"); });
-  $("#f-apply").addEventListener("click", () => {
-    state.min = $("#f-min").value.replace(/\D/g, ""); state.max = $("#f-max").value.replace(/\D/g, "");
-    state.district = $("#f-district").value;
-    $("#fsheet").classList.add("hidden"); $("#fbtn").textContent = (state.min || state.max || state.district) ? "⚙️ Filtr •" : "⚙️ Filtr"; loadFeed(true);
-  });
-  $("#f-reset").addEventListener("click", () => { ["#f-min", "#f-max"].forEach((s) => $(s).value = ""); $("#f-district").value = ""; $("#f-apply").click(); });
+  $("#f-apply").addEventListener("click", () => { state.min = $("#f-min").value.replace(/\D/g, ""); state.max = $("#f-max").value.replace(/\D/g, ""); state.district = $("#f-district").value; $("#fsheet").classList.add("hidden"); $("#fbtn").textContent = filtersOn() ? tr("filter_on") : tr("filter"); loadFeed(true); });
+  $("#f-reset").addEventListener("click", () => { $("#f-min").value = ""; $("#f-max").value = ""; $("#f-district").value = ""; $("#f-apply").click(); });
   async function loadDistricts() {
-    try { const ds = await api("/api/market/districts"); $("#f-district").innerHTML = `<option value="">Hammasi</option>` + ds.map((d) => `<option>${esc(d)}</option>`).join(""); } catch (e) {}
+    try { const ds = await api("/api/market/districts"); $("#f-district").innerHTML = `<option value="">${tr("f_all")}</option>` + ds.map((d) => `<option>${esc(d)}</option>`).join(""); $("#districts").innerHTML = ds.map((d) => `<option value="${esc(d)}">`).join(""); } catch (e) {}
   }
-
-  // feed
   async function loadFeed(reset) {
-    if (reset) { state.page = 0; state.items = []; $("#grid").innerHTML = `<div class="center" style="grid-column:1/-1">Yuklanmoqda…</div>`; }
+    if (reset) { state.page = 0; state.items = []; $("#grid").innerHTML = `<div class="center" style="grid-column:1/-1">${tr("loading")}</div>`; }
     const p = new URLSearchParams({ q: state.q, rooms: state.rooms, price_min: state.min, price_max: state.max, district: state.district, sort: state.sort, page: state.page });
     try {
       const r = await api("/api/market/houses?" + p);
       state.items = state.items.concat(r.items); state.page++;
       $("#more").classList.toggle("hidden", !r.has_more);
       renderGrid($("#grid"), state.items);
-      $("#cnt").textContent = state.items.length ? `${state.items.length}${r.has_more ? "+" : ""} ta e'lon` : "";
-    } catch (e) { $("#grid").innerHTML = `<div class="center" style="grid-column:1/-1">${esc(e.message)}</div>`; }
+      $("#cnt").textContent = state.items.length ? tr("count", { n: state.items.length + (r.has_more ? "+" : "") }) : "";
+    } catch (e) { $("#grid").innerHTML = `<div class="center" style="grid-column:1/-1">${esc(errText(e))}</div>`; }
   }
   function card(h) {
     return `<div class="item" data-id="${h.id}">
       <div class="img" style="${h.photos[0] ? `background-image:url('${photo(h.photos[0])}')` : ""}">${h.photos[0] ? "" : "🏠"}</div>
       <span class="fav" data-fav="${h.id}">${h.is_favorite ? "❤️" : "🤍"}</span>
       <div class="b">
-        <div class="price">${priceStr(h)} <small>/ oy</small></div>
+        <div class="price">${priceStr(h)} <small>${tr("per_month")}</small></div>
         <div class="t">${esc(h.title)}</div>
-        <div class="m">${h.rooms ? h.rooms + " xona · " : ""}${h.area ? h.area + " m² · " : ""}${esc(h.district || h.address)}</div>
+        <div class="m">${h.rooms ? h.rooms + " " + tr("rooms") + " · " : ""}${h.area ? h.area + " m² · " : ""}${esc(h.district || h.address)}</div>
         <div class="m">${ago(h.published_at)}${h.views ? " · 👁 " + h.views : ""}</div>
       </div></div>`;
   }
-  function renderGrid(el, items) {
-    el.innerHTML = items.length ? items.map(card).join("") : `<div class="center" style="grid-column:1/-1">E'lonlar topilmadi</div>`;
-  }
+  function renderGrid(el, items) { el.innerHTML = items.length ? items.map(card).join("") : `<div class="center" style="grid-column:1/-1">${tr("empty")}</div>`; }
   document.addEventListener("click", async (e) => {
-    const f = e.target.closest("[data-fav]");
-    if (f) { e.stopPropagation(); await toggleFav(+f.dataset.fav); return; }
+    const f = e.target.closest("[data-fav]"); if (f) { e.stopPropagation(); await toggleFav(+f.dataset.fav); return; }
     const it = e.target.closest(".item"); if (it) openDetail(+it.dataset.id);
   });
   async function toggleFav(id) {
@@ -326,68 +424,85 @@
       [state.items, state.favs].forEach((arr) => { const h = arr.find((x) => x.id === id); if (h) h.is_favorite = r.is_favorite; });
       if (!r.is_favorite) state.favs = state.favs.filter((x) => x.id !== id);
       document.querySelectorAll(`[data-fav="${id}"]`).forEach((el) => el.textContent = r.is_favorite ? "❤️" : "🤍");
-      haptic("success"); toast(r.is_favorite ? "Sevimlilarga qo'shildi" : "Sevimlilardan olindi");
+      haptic("success"); toast(r.is_favorite ? tr("fav_on") : tr("fav_off"));
       if (!$("#page-fav").classList.contains("hidden")) renderGrid($("#favgrid"), state.favs);
-    } catch (err) { toast(err.message); }
+    } catch (err) { toast(errText(err)); }
   }
-  async function loadFavs() {
-    try { state.favs = await api("/api/market/favorites"); renderGrid($("#favgrid"), state.favs); }
-    catch (e) { $("#favgrid").innerHTML = `<div class="center" style="grid-column:1/-1">${esc(e.message)}</div>`; }
-  }
+  async function loadFavs() { try { state.favs = await api("/api/market/favorites"); renderGrid($("#favgrid"), state.favs); } catch (e) { $("#favgrid").innerHTML = `<div class="center" style="grid-column:1/-1">${esc(errText(e))}</div>`; } }
 
-  // detail
+  // ================= tafsilot =================
   async function openDetail(id) {
-    const el = $("#detail"); el.innerHTML = `<div class="center">Yuklanmoqda…</div>`; el.classList.remove("hidden");
+    const el = $("#detail"); el.innerHTML = `<div class="center">${tr("loading")}</div>`; el.classList.remove("hidden");
     if (inTelegram && tg.BackButton) { tg.BackButton.show(); tg.BackButton.onClick(closeDetail); }
-    let h; try { h = await api("/api/market/houses/" + id); } catch (e) { el.innerHTML = `<div class="center">${esc(e.message)}<br><br><button id="dclose">Yopish</button></div>`; $("#dclose").onclick = closeDetail; return; }
-    const imgs = h.photos.length ? h.photos.map((p) => `<img src="${photo(p)}" loading="lazy" alt="">`).join("") : `<div class="img" style="width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:60px;color:#fff">🏠</div>`;
-    const params = [
-      h.rooms ? ["Xonalar", h.rooms] : null, h.area ? ["Maydon", h.area + " m²"] : null,
-      h.floor ? ["Qavat", h.floor + (h.floors ? "/" + h.floors : "")] : null, h.district ? ["Mavze", h.district] : null,
-    ].filter(Boolean).map(([k, v]) => `<div><small>${k}</small><b>${esc(v)}</b></div>`).join("");
+    let h; try { h = await api("/api/market/houses/" + id); } catch (e) { el.innerHTML = `<div class="center">${esc(errText(e))}<br><br><button id="dclose">${tr("close")}</button></div>`; $("#dclose").onclick = closeDetail; return; }
+    const imgs = h.photos.length ? h.photos.map((p) => `<img src="${photo(p)}" loading="lazy" alt="">`).join("") : `<div style="width:100%;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:60px;color:#fff">🏠</div>`;
+    const params = [h.rooms ? [tr("d_rooms"), h.rooms] : null, h.area ? [tr("d_area"), h.area + " m²"] : null, h.floor ? [tr("d_floor"), h.floor + (h.floors ? "/" + h.floors : "")] : null, h.district ? [tr("d_district"), h.district] : null]
+      .filter(Boolean).map(([k, v]) => `<div><small>${k}</small><b>${esc(v)}</b></div>`).join("");
     const tel = h.contact_phone ? h.contact_phone.replace(/[^\d+]/g, "") : "";
     el.innerHTML = `
-      <div class="gallery">
-        <div class="track" id="track">${imgs}</div>
-        <div class="back" id="dback">‹</div>
+      <div class="gallery"><div class="track" id="track">${imgs}</div><div class="back" id="dback">‹</div>
         <div class="favbtn" data-fav="${h.id}">${h.is_favorite ? "❤️" : "🤍"}</div>
-        ${h.photos.length > 1 ? `<div class="dots" id="dots">1 / ${h.photos.length}</div>` : ""}
-      </div>
+        ${h.photos.length > 1 ? `<div class="dots" id="dots">1 / ${h.photos.length}</div>` : ""}</div>
       <div class="d">
-        <div class="price">${priceStr(h)} <small>/ oy ${uzsStr(h)}</small></div>
+        <div class="price">${priceStr(h)} <small>${tr("per_month")} ${uzsStr(h)}</small></div>
+        ${h.status !== "approved" ? `<div style="margin:6px 0"><span class="badge ${h.status}">${tr("st_" + h.status)}</span>${h.reject_reason ? ` <span style="font-size:12px;color:var(--hint)">${tr("reason")}: ${esc(h.reject_reason)}</span>` : ""}</div>` : ""}
         <h2>${esc(h.title)}</h2>
         <div class="meta">📍 ${esc(h.address)} · ${ago(h.published_at)} · 👁 ${h.views}</div>
         ${params ? `<div class="params">${params}</div>` : ""}
-        <div class="desc">${esc(h.description || "Tavsif yo'q.")}</div>
-        ${h.seller_name || h.seller_username ? `<div class="seller"><div class="av">👤</div><div><div class="n">${esc(h.seller_name || h.seller_username)}</div><div class="u">Uy egasi / rieltor</div></div></div>` : ""}
+        <div class="desc">${esc(h.description || tr("no_desc"))}</div>
+        ${h.seller_name || h.seller_username ? `<div class="seller"><div class="av">👤</div><div><div class="n">${esc(h.seller_name || h.seller_username)}</div><div class="u">${tr("owner")}</div></div></div>` : ""}
       </div>
-      <div class="cta">
-        ${tel ? `<button class="accent" id="call">📞 Qo'ng'iroq qilish</button>` : `<button class="primary" disabled>Telefon ko'rsatilmagan</button>`}
-      </div>`;
+      <div class="cta">${tel ? `<button class="accent" id="call">${tr("call")}</button>` : `<button class="primary" disabled>${tr("no_phone")}</button>`}</div>`;
     $("#dback").onclick = closeDetail;
-    const track = $("#track"); if (track && $("#dots")) track.addEventListener("scroll", () => { const i = Math.round(track.scrollLeft / track.clientWidth) + 1; $("#dots").textContent = `${i} / ${h.photos.length}`; });
+    const track = $("#track"); if (track && $("#dots")) track.addEventListener("scroll", () => { $("#dots").textContent = `${Math.round(track.scrollLeft / track.clientWidth) + 1} / ${h.photos.length}`; });
     if ($("#call")) $("#call").onclick = () => { location.href = "tel:" + tel; };
   }
   function closeDetail() { $("#detail").classList.add("hidden"); if (inTelegram && tg.BackButton) { tg.BackButton.hide(); tg.BackButton.offClick(closeDetail); } }
 
-  // profile
-  function renderProfile() {
-    $("#page-prof").innerHTML = `
-      <div class="card"><div class="k">Ism</div><div class="v">${esc(me.full_name)}</div></div>
-      <div class="card"><div class="k">Telefon</div><div class="v">${esc(me.phone || "—")}</div></div>
-      <div class="card"><div class="k">Rol</div><div class="v">${me.role === "landlord" ? "🏠 Uy egasi" : "🔑 Ijarachi"}</div></div>
-      <div class="card"><div class="k">Telegram</div><div class="v">${me.username ? "@" + esc(me.username) : "ID " + me.telegram_id}</div></div>
-      <button class="primary" id="edit" style="width:100%;padding:12px">✏️ Ma'lumotlarni o'zgartirish</button>
-      <p style="color:var(--hint);font-size:12px;margin-top:14px">E'lonlar muntazam yangilanib turadi. Kurs: 1 y.e = ${money(me.usd_rate || 12500)} so'm.</p>`;
-    $("#edit").onclick = () => { $("#app").classList.add("hidden"); $("#reg").classList.remove("hidden"); $("#r-name").value = me.full_name; $("#r-phone").value = me.phone || ""; role = me.role || "tenant"; document.querySelectorAll(".roles div").forEach((x) => x.classList.toggle("active", x.dataset.role === role)); };
+  // ================= profil + mening e'lonlarim =================
+  async function renderProfile() {
+    const el = $("#page-prof");
+    const langBtns = Object.keys(LANG_NAMES).map((c) => `<button data-lang="${c}" class="${c === lang ? "active" : ""}">${LANG_NAMES[c]}</button>`).join("");
+    el.innerHTML = `
+      <div class="card"><div class="k">${tr("pr_lang")}</div><div class="langs" style="margin-top:8px">${langBtns}</div></div>
+      ${me.registered ? `
+        <div class="card"><div class="k">${tr("pr_name")}</div><div class="v">${esc(me.full_name)}</div></div>
+        <div class="card"><div class="k">${tr("pr_phone")}</div><div class="v">${esc(me.phone || "—")}</div></div>
+        <div class="card"><div class="k">${tr("pr_role")}</div><div class="v">${me.role === "landlord" ? "🏠 " + tr("landlord") : "🔑 " + tr("tenant")}</div></div>
+        <button class="primary" id="edit" style="width:100%;padding:12px">${tr("pr_edit")}</button>`
+      : `<div class="card"><div class="k">${tr("pr_name")}</div><div class="v">${esc(me.tg_name || "")}</div><div class="k" style="margin-top:6px">${tr("pr_not_registered")}</div></div>
+         <button class="primary" id="edit" style="width:100%;padding:12px">${tr("pr_register")}</button>`}
+      <div class="card"><div class="k">${tr("pr_tg")}</div><div class="v">${me.username ? "@" + esc(me.username) : "ID " + me.telegram_id}</div></div>
+      <h3 style="margin:18px 0 8px">${tr("my_title")}</h3>
+      <div id="myads"><div class="center">${tr("loading")}</div></div>
+      <p style="color:var(--hint);font-size:12px;margin-top:14px">${tr("pr_info", { rate: money(me.usd_rate || 12500) })}</p>`;
+    $("#edit").onclick = () => openReg(false);
+    el.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", async () => {
+      try { await api("/api/market/lang", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lang: b.dataset.lang }) }); lang = b.dataset.lang; me.lang = lang; applyI18n(); renderProfile(); renderGrid($("#grid"), state.items); toast(tr("lang_saved")); } catch (e) { toast(errText(e)); }
+    }));
+    try {
+      const ads = me.registered ? await api("/api/market/my") : [];
+      $("#myads").innerHTML = ads.length ? ads.map((h) => `
+        <div class="myad" data-my="${h.id}">
+          <div class="th" style="${h.photos[0] ? `background-image:url('${photo(h.photos[0])}')` : ""}">${h.photos[0] ? "" : "🏠"}</div>
+          <div class="bd"><div class="t">${esc(h.title)} <span class="badge ${h.status}">${tr("st_" + h.status)}</span></div>
+            <div class="m">${priceStr(h)} ${tr("per_month")} · ${h.rooms || "—"} ${tr("rooms")}</div>
+            ${h.reject_reason ? `<div class="m">${tr("reason")}: ${esc(h.reject_reason)}</div>` : ""}
+            <div style="margin-top:6px"><button class="danger" data-del="${h.id}">${tr("delete")}</button></div></div>
+        </div>`).join("") : `<div class="center" style="padding:16px">${tr("my_empty")}</div>`;
+      el.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", async (ev) => {
+        ev.stopPropagation(); if (!(await confirmDlg(tr("delete_confirm")))) return;
+        try { await api("/api/market/my/" + b.dataset.del, { method: "DELETE" }); toast(tr("deleted")); renderProfile(); } catch (e) { toast(errText(e)); }
+      }));
+      el.querySelectorAll(".myad").forEach((c) => c.addEventListener("click", () => openDetail(+c.dataset.my)));
+    } catch (e) { $("#myads").innerHTML = `<div class="center">${esc(errText(e))}</div>`; }
   }
 
-  // boot
+  // ================= boot =================
   api("/api/market/me").then((m) => {
-    me = m;
-    if (m.registered) { showApp(); }
-    else { $("#reg").classList.remove("hidden"); $("#r-name").value = m.tg_name || ""; }
-  }).catch((e) => { $("#gate").classList.remove("hidden"); $("#gate-msg").textContent = e.message; });
+    me = m; lang = (I18N[m.lang] ? m.lang : "uz"); applyI18n();
+    showApp(); loadDistricts(); loadFeed(true);
+  }).catch((e) => { applyI18n(); $("#gate").classList.remove("hidden"); $("#gate-msg").textContent = e.message; });
 })();
 </script>
 </body>

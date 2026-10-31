@@ -17,6 +17,7 @@ from aiogram.types import (
 from bot import db, keepalive, sync, tunnel
 from bot.config import config
 from bot.handlers import admin, user
+from bot.i18n import LANGS, t
 from bot.middlewares import UserMiddleware
 from bot.webapp.server import start_server
 
@@ -26,34 +27,49 @@ logging.basicConfig(
 )
 log = logging.getLogger("chirchiq_arenda")
 
+_CMD_DESC = {
+    "uz": {"start": "Botni ishga tushirish", "lang": "Tilni o'zgartirish"},
+    "ru": {"start": "Запустить бота", "lang": "Сменить язык"},
+    "en": {"start": "Start the bot", "lang": "Change language"},
+}
+
 
 async def set_commands(bot: Bot, webapp_url: str) -> None:
-    await bot.set_my_commands([BotCommand(command="start", description="Botni ishga tushirish")])
+    # Hamma uchun: /start, /lang (har tilda)
+    for code in LANGS:
+        d = _CMD_DESC[code]
+        try:
+            await bot.set_my_commands(
+                [BotCommand(command="start", description=d["start"]),
+                 BotCommand(command="lang", description=d["lang"])],
+                language_code=code,
+            )
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Komandalar (%s) o'rnatilmadi: %s", code, exc)
+    await bot.set_my_commands([BotCommand(command="start", description=_CMD_DESC["uz"]["start"]),
+                               BotCommand(command="lang", description=_CMD_DESC["uz"]["lang"])])
 
-    # Hamma uchun chat pastidagi "Menu" tugmasi -> uylar bozori (Mini App)
+    # Hamma uchun chat pastidagi "Menu" tugmasi -> uylar bozori (admin panel bu yerda ko'rinmaydi)
     try:
         if webapp_url:
             await bot.set_chat_menu_button(
-                menu_button=MenuButtonWebApp(text="🏠 Uylar", web_app=WebAppInfo(url=webapp_url + "/market"))
+                menu_button=MenuButtonWebApp(text=t("uz", "menu_btn"), web_app=WebAppInfo(url=webapp_url + "/market"))
             )
         else:
             await bot.set_chat_menu_button(menu_button=MenuButtonDefault())
     except Exception as exc:  # noqa: BLE001
         log.warning("Umumiy menyu tugmasi o'rnatilmadi: %s", exc)
 
+    # Adminlar uchun qo'shimcha buyruqlar (faqat buyruqlar ro'yxatida, /start da ko'rinmaydi)
     admin_cmds = [
         BotCommand(command="start", description="Botni ishga tushirish"),
         BotCommand(command="admin", description="Admin panel (Mini App)"),
         BotCommand(command="menu", description="Admin menyu (tugmali)"),
+        BotCommand(command="lang", description="Tilni o'zgartirish"),
     ]
-    for admin_id in config.admin_ids:
+    for admin_id in await db.all_admin_ids():
         try:
             await bot.set_my_commands(admin_cmds, scope=BotCommandScopeChat(chat_id=admin_id))
-            if webapp_url:
-                await bot.set_chat_menu_button(
-                    chat_id=admin_id,
-                    menu_button=MenuButtonWebApp(text="Admin", web_app=WebAppInfo(url=webapp_url)),
-                )
         except Exception as exc:  # admin hali botga yozmagan bo'lishi mumkin
             log.warning("Admin %s uchun komandalar o'rnatilmadi: %s", admin_id, exc)
 
@@ -88,7 +104,7 @@ async def main() -> None:
 
     runner = await start_server(bot)
     webapp_url = await resolve_webapp_url()
-    dp["webapp_url"] = webapp_url  # handlerlarga `webapp_url` argumenti sifatida keladi
+    dp["webapp_url"] = webapp_url
     if webapp_url:
         log.info("Admin Mini App: %s", webapp_url)
         log.info("Market Mini App: %s/market", webapp_url)
@@ -96,7 +112,7 @@ async def main() -> None:
     await set_commands(bot, webapp_url)
     sync.start_background()
     keepalive.start_background(webapp_url)
-    log.info("Bot ishga tushdi. Adminlar: %s", sorted(config.admin_ids))
+    log.info("Bot ishga tushdi. Superadminlar: %s", sorted(config.admin_ids))
 
     try:
         await bot.delete_webhook(drop_pending_updates=True)

@@ -69,9 +69,9 @@ async def cmd_menu(message: Message, state: FSMContext) -> None:
 
 
 @router.message(F.text == kb.BTN_EXIT)
-async def admin_exit(message: Message, state: FSMContext) -> None:
+async def admin_exit(message: Message, state: FSMContext, lang: str = "uz") -> None:
     await state.clear()
-    await message.answer("Admin paneldan chiqdingiz.", reply_markup=kb.user_menu())
+    await message.answer("Admin paneldan chiqdingiz.", reply_markup=kb.user_menu(lang))
 
 
 @router.message(StateFilter("*"), F.text == kb.BTN_CANCEL)
