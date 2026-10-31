@@ -97,11 +97,11 @@
       <span class="chip active" data-f="all">Hammasi</span>
       <span class="chip" data-f="active">Faol</span>
       <span class="chip" data-f="hidden">Yashirilgan</span>
-      <span class="chip" data-f="joymee">Joymee</span>
-      <span class="chip" data-f="admin">Bizniki</span>
+      <span class="chip" data-f="joymee">Avtomatik</span>
+      <span class="chip" data-f="admin">Qo'lda qo'shilgan</span>
     </div>
     <div class="actions" style="margin:0 0 10px">
-      <button class="primary" id="sync">🔄 Joymee'dan yangilash</button>
+      <button class="primary" id="sync">🔄 E'lonlarni yangilash</button>
       <span id="sync-info" style="font-size:12px;color:var(--hint);align-self:center"></span>
     </div>
     <div id="houses-list"></div>
@@ -185,7 +185,6 @@
   }
   const photoUrl = (u) => u.startsWith("/api/photo/") ? u + "?_auth=" + encodeURIComponent(initData) : u;
   const priceStr = (h) => (h.currency === "USD" ? money(h.price) + " y.e" : money(h.price) + " so'm");
-  const srcName = (s) => (s === "joymee" ? "Joymee" : "Bizniki");
 
   // ---------- gate ----------
   if (!initData) {
@@ -217,14 +216,14 @@
   async function loadSyncInfo() {
     try {
       const s = await api("/api/stats"); const ls = s.last_sync;
-      $("#sync-info").textContent = ls ? `Oxirgi: ${new Date(ls.finished_at || ls.started_at).toLocaleString("uz")} · ${ls.seen} ta` + (ls.error ? " · xato" : "") : "Hali sinxronlanmagan";
+      $("#sync-info").textContent = ls ? `Oxirgi yangilanish: ${new Date(ls.finished_at || ls.started_at).toLocaleString("uz")} · ${ls.seen} ta` + (ls.error ? " · xato" : "") : "Hali yangilanmagan";
     } catch (e) {}
   }
   $("#sync").addEventListener("click", async () => {
     const b = $("#sync"); b.disabled = true; b.textContent = "⏳ Yangilanmoqda…";
     try { const r = await api("/api/sync", { method: "POST" }); haptic("success"); toast(`Yangi ${r.added}, yangilandi ${r.updated}, yopildi ${r.deactivated}`); await loadHouses(); }
     catch (e) { haptic("error"); toast(e.message); }
-    finally { b.disabled = false; b.textContent = "🔄 Joymee'dan yangilash"; }
+    finally { b.disabled = false; b.textContent = "🔄 E'lonlarni yangilash"; }
   });
   function renderHouses() {
     const list = houses.filter((h) => houseFilter === "all" || (houseFilter === "active" ? h.is_active : houseFilter === "hidden" ? !h.is_active : h.source === houseFilter));
@@ -235,12 +234,11 @@
         <div class="body">
           <div class="title">#${h.id} ${esc(h.title)}
             <span class="badge ${h.is_active ? "ok" : "off"}">${h.is_active ? "faol" : "yashirin"}</span>
-            <span class="badge" style="background:${h.source === "joymee" ? "#5b3df5" : "var(--warn)"}">${srcName(h.source)}</span></div>
+            ${h.source === "admin" ? `<span class="badge" style="background:var(--warn)">qo'lda</span>` : ""}</div>
           <div class="meta">📍 ${esc(h.district || h.address)}${h.rooms ? " · 🚪 " + h.rooms + " xona" : ""}${h.contact_phone ? " · 📞 " + esc(h.contact_phone) : ""}</div>
           <div class="price">${priceStr(h)} / oy${h.views ? ` <span style="color:var(--hint);font-weight:400;font-size:12px">· 👁 ${h.views}</span>` : ""}</div>
           <div class="actions">
             <button data-act="toggle">${h.is_active ? "🙈 Yashirish" : "👁 Ko'rsatish"}</button>
-            ${h.source_url ? `<button data-act="src">↗ ${srcName(h.source)}</button>` : ""}
             ${h.source === "admin" ? `<button class="danger" data-act="del">🗑 O'chirish</button>` : ""}
           </div>
         </div>
@@ -249,7 +247,6 @@
   $("#houses-list").addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-act]"); if (!btn) return;
     const id = +btn.closest(".card").dataset.id; const h = houses.find((x) => x.id === id);
-    if (btn.dataset.act === "src") { if (inTelegram && tg.openLink) tg.openLink(h.source_url); else window.open(h.source_url, "_blank"); return; }
     btn.disabled = true;
     try {
       if (btn.dataset.act === "del") {
@@ -343,9 +340,9 @@
         ["👥 Klientlar", s.users_total], ["✅ Ro'yxatdan o'tgan", s.users_registered],
         ["🚫 Bloklangan", s.users_blocked], ["❤️ Sevimlilar", s.favorites_total],
         ["🏠 Jami e'lonlar", s.houses_total], ["🟢 Faol", s.houses_active],
-        ["🟣 Joymee", s.houses_joymee], ["🟠 Bizniki", s.houses_admin],
+        ["🤖 Avtomatik e'lonlar", s.houses_joymee], ["✍️ Qo'lda qo'shilgan", s.houses_admin],
       ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")
-      + `<div class="stat" style="grid-column:1/-1"><div class="l">Oxirgi sinxronlash</div><div style="font-size:13px;margin-top:4px">${ls ? `${new Date(ls.finished_at || ls.started_at).toLocaleString("uz")} — ko'rildi ${ls.seen}, yangi ${ls.added}, yangilandi ${ls.updated}, yopildi ${ls.deactivated}${ls.error ? `<br><span style="color:var(--danger)">Xato: ${esc(ls.error)}</span>` : ""}` : "hali yo'q"}<br>Avtomatik: ${s.sync_interval_min ? "har " + s.sync_interval_min + " daqiqada" : "o'chiq"}</div></div>`;
+      + `<div class="stat" style="grid-column:1/-1"><div class="l">Oxirgi yangilanish</div><div style="font-size:13px;margin-top:4px">${ls ? `${new Date(ls.finished_at || ls.started_at).toLocaleString("uz")} — ko'rildi ${ls.seen}, yangi ${ls.added}, yangilandi ${ls.updated}, yopildi ${ls.deactivated}${ls.error ? `<br><span style="color:var(--danger)">Xato: ${esc(ls.error)}</span>` : ""}` : "hali yo'q"}<br>Avtomatik: ${s.sync_interval_min ? "har " + s.sync_interval_min + " daqiqada" : "o'chiq"}</div></div>`;
     } catch (e) { $("#stats-grid").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }
 
