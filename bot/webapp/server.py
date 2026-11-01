@@ -27,6 +27,7 @@ from aiogram.utils.web_app import safe_parse_webapp_init_data
 from aiohttp import web
 
 from bot import db, sync
+from bot.auth import TokenError, verify_admin_token
 from bot.config import config
 from bot.i18n import LANGS, norm_lang, t
 
@@ -101,11 +102,21 @@ async def auth_middleware(request: web.Request, handler):
             raise web.HTTPForbidden(text=t(request["lang"], "blocked"))
     elif request.path.startswith("/api/photo/"):
         pass
-    elif request.path.startswith("/api/admins"):
-        if not is_super:
+    else:
+        # Admin API: admin bo'lishi + /admin buyrug'i bergan JWT (X-Admin-Token) shu foydalanuvchiga tegishli bo'lishi shart
+        if not is_admin:
+            raise web.HTTPForbidden(text="Siz admin emassiz.")
+        jwt = request.headers.get("X-Admin-Token", "").strip()
+        if not jwt:
+            raise web.HTTPUnauthorized(text="TOKEN_REQUIRED")
+        try:
+            payload = verify_admin_token(jwt)
+        except TokenError as exc:
+            raise web.HTTPUnauthorized(text=str(exc))
+        if payload["sub"] != data.user.id:
+            raise web.HTTPForbidden(text="TOKEN_OTHER_USER")
+        if request.path.startswith("/api/admins") and not is_super:
             raise web.HTTPForbidden(text="Faqat superadmin.")
-    elif not is_admin:
-        raise web.HTTPForbidden(text="Siz admin emassiz.")
 
     return await handler(request)
 
@@ -275,8 +286,39 @@ async def _upload_photos(request: web.Request, form, caption: str) -> list[str]:
 
 # ----------------------------------------------------------- pages/static ---
 
-async def index(request: web.Request) -> web.FileResponse:
-    return web.FileResponse(STATIC_DIR / "index.html")
+_DENIED_HTML = """<!doctype html><html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>403</title>
+<style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f2f3f5;color:#333;display:flex;
+align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;padding:20px}
+.b{background:#fff;border-radius:16px;padding:28px 24px;max-width:360px}h1{font-size:40px;margin:0 0 8px}</style>
+</head><body><div class="b"><h1>🔒</h1><b>{title}</b><p style="color:#777;font-size:14px">{msg}</p></div></body></html>"""
+
+_DENIED_MSG = {
+    "TOKEN_REQUIRED": ("Ruxsat yo'q", "Admin panel faqat bot orqali ochiladi: Telegramda /admin yuboring."),
+    "TOKEN_EXPIRED": ("Havola eskirgan", "Telegramda /admin ni qayta yuboring — yangi havola keladi."),
+    "TOKEN_INVALID": ("Havola noto'g'ri", "Telegramda /admin yuboring va tugmani bosing."),
+    "TOKEN_MALFORMED": ("Havola noto'g'ri", "Telegramda /admin yuboring va tugmani bosing."),
+}
+
+
+async def index(request: web.Request) -> web.Response:
+    """Ildiz manzil admin panelni ko'rsatmaydi."""
+    raise web.HTTPNotFound(text="Not found")
+
+
+async def admin_page(request: web.Request) -> web.Response:
+    """Admin Mini App — faqat /admin buyrug'i bergan JWT bilan (?t=...)."""
+    token = request.query.get("t", "").strip()
+    code = "TOKEN_REQUIRED"
+    if token:
+        try:
+            verify_admin_token(token)
+            return web.FileResponse(STATIC_DIR / "index.html")
+        except TokenError as exc:
+            code = str(exc)
+    title, msg = _DENIED_MSG.get(code, _DENIED_MSG["TOKEN_INVALID"])
+    return web.Response(text=_DENIED_HTML.replace("{title}", title).replace("{msg}", msg),
+                        content_type="text/html", status=403)
 
 
 async def market_page(request: web.Request) -> web.FileResponse:
@@ -648,6 +690,7 @@ def create_app(bot: Bot) -> web.Application:
     app["bot"] = bot
     app.add_routes([
         web.get("/", index),
+        web.get("/admin", admin_page),
         web.get("/market", market_page),
         web.get("/health", health),
         web.get("/api/photo/{file_id}", api_photo),

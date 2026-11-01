@@ -25,6 +25,9 @@ class Config:
     keepalive_min: int = 10                     # 0 = o'chiq; Render 15 daqiqada uxlatadi, 10 yetarli
     # Klient e'lonlari moderatsiyasi: False = darhol bozorga chiqadi, True = admin tasdiqlashi kerak
     moderation: bool = False
+    # Admin panel JWT: maxfiy kalit (bo'sh = bot tokenidan hosil qilinadi) va amal qilish muddati
+    admin_jwt_secret: str = ""
+    admin_token_hours: int = 12
 
 
 def _parse_admin_ids(raw: str) -> frozenset[int]:
@@ -64,6 +67,8 @@ def load_config() -> Config:
         webapp_port=int(os.getenv("WEBAPP_PORT", "").strip() or hosted_port or 8080),
         keepalive_min=int(os.getenv("KEEPALIVE_MIN", "10") or 0),
         moderation=os.getenv("MODERATION", "0").strip().lower() in ("1", "true", "yes", "on"),
+        admin_jwt_secret=os.getenv("ADMIN_JWT_SECRET", "").strip(),
+        admin_token_hours=int(os.getenv("ADMIN_TOKEN_HOURS", "12") or 12),
         sync_interval_min=int(os.getenv("SYNC_INTERVAL_MIN", "30") or 0),
         joymee_districts=_parse_int_list(os.getenv("JOYMEE_DISTRICTS", ""), (166,)),
         joymee_categories=_parse_int_list(os.getenv("JOYMEE_CATEGORIES", ""), (4, 5)),

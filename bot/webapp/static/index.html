@@ -151,7 +151,7 @@
 <script>
 (() => {
   const I18N = {
-    uz: { title: "Admin panel", gate: "Bu sahifa faqat Telegram ichida, admin akkaunt bilan ochiladi.", t_houses: "Uylar", t_users: "Klientlar", t_stats: "Statistika", t_admins: "Adminlar",
+    uz: { title: "Admin panel", gate: "Bu sahifa faqat Telegramda /admin buyrug'i orqali, admin akkaunt bilan ochiladi.", t_houses: "Uylar", t_users: "Klientlar", t_stats: "Statistika", t_admins: "Adminlar",
       c_all: "Hammasi", c_pending: "⏳ Moderatsiya", c_active: "Faol", c_hidden: "Yashirilgan", c_clients: "Klient e'lonlari", c_auto: "Avtomatik", c_manual: "Qo'lda qo'shilgan",
       sync: "🔄 E'lonlarni yangilash", syncing: "⏳ Yangilanmoqda…", sync_last: "Oxirgi yangilanish", sync_never: "Hali yangilanmagan", sync_done: "Yangi {a}, yangilandi {u}, yopildi {d}", sync_err: "xato",
       add_house: "＋ Uy qo'shish", new_house: "➕ Yangi uy", f_title: "Nomi", f_address: "Manzil", f_district: "Mavze / tuman", f_rooms: "Xonalar", f_area: "Maydon, m²", f_price: "Narx (oyiga)", f_currency: "Valyuta", f_floor: "Qavat", f_floors: "Uy qavatlari", f_phone: "Telefon", f_desc: "Tavsif", f_photos: "Rasmlar (8 tagacha)", cancel: "Bekor qilish", save: "Saqlash", saving: "Saqlanmoqda…", saved: "Uy #{id} qo'shildi",
@@ -160,7 +160,7 @@
       u_search: "Ism, @username yoki ID bo'yicha qidirish", u_active: "Faol", u_blocked: "Bloklangan", u_title: "Klientlar", u_hint: "✅ — faol, 🚫 — bloklangan", u_empty: "Klientlar topilmadi", block: "🚫 Bloklash", unblock: "✅ Blokdan chiqarish", block_reason: "Sabab (ixtiyoriy)", blocked: "Bloklandi", unblocked: "Blokdan chiqarildi", registered: "ro'yxatdan o'tgan",
       s_users: "👥 Klientlar", s_registered: "✅ Ro'yxatdan o'tgan", s_blocked: "🚫 Bloklangan", s_favs: "❤️ Sevimlilar", s_total: "🏠 Jami e'lonlar", s_active: "🟢 Faol", s_pending: "⏳ Moderatsiyada", s_clients: "👤 Klient e'lonlari", s_auto: "🤖 Avtomatik", s_manual: "✍️ Qo'lda qo'shilgan", s_admins: "🛡 Adminlar", s_last: "Oxirgi yangilanish", s_seen: "ko'rildi", s_new: "yangi", s_upd: "yangilandi", s_closed: "yopildi", s_auto_every: "Avtomatik: har {n} daqiqada", s_auto_off: "Avtomatik: o'chiq", s_error: "Xato",
       a_add_title: "Admin qo'shish", a_id: "Telegram ID", a_note: "Izoh (ism)", a_add: "➕ Qo'shish", a_hint: "Foydalanuvchi avval botga /start yuborgan bo'lishi kerak. ID ni «Klientlar» bo'limidan oling.", a_super: "superadmin", a_remove: "🗑 Olib tashlash", a_remove_confirm: "{id} adminlikdan olinsinmi?", a_added: "Admin qo'shildi", a_removed: "Olib tashlandi", a_empty: "Adminlar yo'q" },
-    ru: { title: "Админ-панель", gate: "Страница открывается только в Telegram с аккаунта администратора.", t_houses: "Жильё", t_users: "Клиенты", t_stats: "Статистика", t_admins: "Админы",
+    ru: { title: "Админ-панель", gate: "Страница открывается только через команду /admin в Telegram с аккаунта администратора.", t_houses: "Жильё", t_users: "Клиенты", t_stats: "Статистика", t_admins: "Админы",
       c_all: "Все", c_pending: "⏳ Модерация", c_active: "Активные", c_hidden: "Скрытые", c_clients: "От клиентов", c_auto: "Автоматические", c_manual: "Добавленные вручную",
       sync: "🔄 Обновить объявления", syncing: "⏳ Обновление…", sync_last: "Последнее обновление", sync_never: "Ещё не обновлялось", sync_done: "Новых {a}, обновлено {u}, закрыто {d}", sync_err: "ошибка",
       add_house: "＋ Добавить жильё", new_house: "➕ Новое объявление", f_title: "Название", f_address: "Адрес", f_district: "Район", f_rooms: "Комнат", f_area: "Площадь, м²", f_price: "Цена (в месяц)", f_currency: "Валюта", f_floor: "Этаж", f_floors: "Этажей", f_phone: "Телефон", f_desc: "Описание", f_photos: "Фото (до 8)", cancel: "Отмена", save: "Сохранить", saving: "Сохранение…", saved: "Объявление #{id} добавлено",
@@ -169,7 +169,7 @@
       u_search: "Поиск по имени, @username или ID", u_active: "Активные", u_blocked: "Заблокированные", u_title: "Клиенты", u_hint: "✅ — активен, 🚫 — заблокирован", u_empty: "Клиенты не найдены", block: "🚫 Заблокировать", unblock: "✅ Разблокировать", block_reason: "Причина (необязательно)", blocked: "Заблокирован", unblocked: "Разблокирован", registered: "зарегистрирован",
       s_users: "👥 Клиенты", s_registered: "✅ Зарегистрированы", s_blocked: "🚫 Заблокированы", s_favs: "❤️ Избранное", s_total: "🏠 Всего объявлений", s_active: "🟢 Активные", s_pending: "⏳ На модерации", s_clients: "👤 От клиентов", s_auto: "🤖 Автоматические", s_manual: "✍️ Вручную", s_admins: "🛡 Админы", s_last: "Последнее обновление", s_seen: "просмотрено", s_new: "новых", s_upd: "обновлено", s_closed: "закрыто", s_auto_every: "Автоматически: каждые {n} мин", s_auto_off: "Автоматически: выкл", s_error: "Ошибка",
       a_add_title: "Добавить админа", a_id: "Telegram ID", a_note: "Заметка (имя)", a_add: "➕ Добавить", a_hint: "Пользователь должен сначала отправить боту /start. ID можно взять в разделе «Клиенты».", a_super: "суперадмин", a_remove: "🗑 Убрать", a_remove_confirm: "Убрать {id} из админов?", a_added: "Админ добавлен", a_removed: "Убран", a_empty: "Админов нет" },
-    en: { title: "Admin panel", gate: "This page opens only inside Telegram with an admin account.", t_houses: "Listings", t_users: "Clients", t_stats: "Stats", t_admins: "Admins",
+    en: { title: "Admin panel", gate: "This page opens only via the /admin command in Telegram with an admin account.", t_houses: "Listings", t_users: "Clients", t_stats: "Stats", t_admins: "Admins",
       c_all: "All", c_pending: "⏳ Review", c_active: "Active", c_hidden: "Hidden", c_clients: "From clients", c_auto: "Automatic", c_manual: "Added manually",
       sync: "🔄 Refresh listings", syncing: "⏳ Refreshing…", sync_last: "Last refresh", sync_never: "Not refreshed yet", sync_done: "New {a}, updated {u}, closed {d}", sync_err: "error",
       add_house: "＋ Add listing", new_house: "➕ New listing", f_title: "Title", f_address: "Address", f_district: "District", f_rooms: "Rooms", f_area: "Area, m²", f_price: "Price (per month)", f_currency: "Currency", f_floor: "Floor", f_floors: "Floors", f_phone: "Phone", f_desc: "Description", f_photos: "Photos (up to 8)", cancel: "Cancel", save: "Save", saving: "Saving…", saved: "Listing #{id} added",
@@ -201,14 +201,18 @@
   let toastTimer; function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2400); }
   function haptic(type) { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(type); } catch (e) {} }
   const confirmDlg = (msg) => new Promise((res) => { if (inTelegram && tg.showConfirm) tg.showConfirm(msg, res); else res(window.confirm(msg)); });
+  // /admin buyrug'i bergan JWT: URL (?t=...) dan olinadi va har so'rovda yuboriladi
+  let adminToken = new URLSearchParams(location.search).get("t") || "";
+  try { if (adminToken) sessionStorage.setItem("admin_token", adminToken); else adminToken = sessionStorage.getItem("admin_token") || ""; } catch (e) {}
+  const TOKEN_MSG = { TOKEN_REQUIRED: "Telegramda /admin yuboring va tugmani bosing.", TOKEN_EXPIRED: "Havola eskirgan — Telegramda /admin ni qayta yuboring.", TOKEN_INVALID: "Havola noto'g'ri — Telegramda /admin yuboring.", TOKEN_MALFORMED: "Havola noto'g'ri — Telegramda /admin yuboring.", TOKEN_OTHER_USER: "Bu havola boshqa foydalanuvchiga berilgan." };
   async function api(path, opts = {}) {
-    const headers = Object.assign({ Authorization: "tma " + initData }, opts.headers || {});
+    const headers = Object.assign({ Authorization: "tma " + initData, "X-Admin-Token": adminToken }, opts.headers || {});
     const r = await fetch(path, Object.assign({}, opts, { headers }));
-    if (!r.ok) throw new Error((await r.text()) || ("HTTP " + r.status));
+    if (!r.ok) { const txt = (await r.text()) || ("HTTP " + r.status); throw new Error(TOKEN_MSG[txt] || txt); }
     return r.status === 204 ? null : r.json();
   }
   let me = null, pendingCount = 0;
-  if (!initData) { document.querySelectorAll("main > section").forEach((s) => s.classList.add("hidden")); $("#gate").classList.remove("hidden"); $("#fab").classList.add("hidden"); applyI18n(); return; }
+  if (!initData || !adminToken) { document.querySelectorAll("main > section").forEach((s) => s.classList.add("hidden")); $("#gate").classList.remove("hidden"); $("#gate-msg").textContent = !adminToken ? TOKEN_MSG.TOKEN_REQUIRED : ""; $("#fab").classList.add("hidden"); applyI18n(); return; }
 
   $("#lang").addEventListener("change", () => { lang = $("#lang").value; try { localStorage.setItem("admin_lang", lang); } catch (e) {} applyI18n(); renderHouses(); renderUsers(); });
 

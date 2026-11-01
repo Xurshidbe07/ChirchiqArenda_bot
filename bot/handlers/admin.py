@@ -17,6 +17,8 @@ from aiogram.types import (
 
 from bot import db
 from bot import keyboards as kb
+from bot.auth import make_admin_token
+from bot.config import config
 from bot.filters import IsAdmin
 from bot.states import AddHouse, BlockClient, UnblockClient
 
@@ -45,14 +47,18 @@ async def cmd_admin(message: Message, state: FSMContext, webapp_url: str = "") -
             reply_markup=kb.admin_menu(),
         )
         return
+    # Har /admin da yangi JWT — faqat shu foydalanuvchi, faqat ADMIN_TOKEN_HOURS soat
+    token = make_admin_token(message.from_user.id)
     markup = InlineKeyboardMarkup(
         inline_keyboard=[[
-            InlineKeyboardButton(text="🛠 Admin panelni ochish", web_app=WebAppInfo(url=webapp_url)),
+            InlineKeyboardButton(text="🛠 Admin panelni ochish",
+                                 web_app=WebAppInfo(url=f"{webapp_url}/admin?t={token}")),
         ]]
     )
     await message.answer(
         "🛠 <b>Admin panel</b>\n\n"
-        "Tugmani bosing — interfeys ochiladi.\n"
+        f"Tugmani bosing — interfeys ochiladi. Havola {config.admin_token_hours} soat amal qiladi, "
+        "keyin /admin ni qayta yuboring.\n"
         "<i>Oddiy tugmali menyu: /menu</i>",
         reply_markup=markup,
     )

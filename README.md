@@ -14,7 +14,16 @@ Mini App ochiladi (chat pastidagi «Admin» menyu tugmasi ham shuni ochadi):
 - 📊 **Statistika**
 
 Texnik: `bot/webapp/server.py` (aiohttp API) + `bot/webapp/static/index.html`.
-Har bir so'rov Telegram `initData` imzosi bilan tekshiriladi, faqat `ADMIN_IDS` kiradi.
+
+**Xavfsizlik (ikki qatlam):**
+1. `/admin` buyrug'i faqat adminlarga (superadmin = `ADMIN_IDS`, adminlar = `admins` jadvali) javob beradi va
+   12 soatlik **JWT** (`bot/auth.py`, HS256) bilan havola beradi: `{WEBAPP_URL}/admin?t=<token>`.
+   Tokensiz, eskirgan yoki buzilgan token bilan sahifa 403 qaytaradi; ildiz manzil `/` hech narsa ko'rsatmaydi.
+2. Har API so'rovi Telegram `initData` imzosini (admin ekanligini) **va** `X-Admin-Token` JWT ni
+   (aynan shu foydalanuvchiga berilganligini) tekshiradi. Admin ro'yxatdan olib tashlansa, tokeni
+   muddati tugamasdan ham ishlamay qoladi.
+
+`ADMIN_JWT_SECRET` (ixtiyoriy) va `ADMIN_TOKEN_HOURS` `.env` da sozlanadi.
 
 Mini App uchun HTTPS manzil kerak:
 - **Dev:** `WEBAPP_URL` bo'sh qoldiring va [cloudflared](https://github.com/cloudflare/cloudflared/releases)
