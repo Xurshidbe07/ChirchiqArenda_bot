@@ -1,0 +1,74 @@
+# CI/CD: har push'da lint + testlar (haqiqiy PostgreSQL bilan),
+# main branchida testlar o'tsa Render'ga avtomatik deploy (Deploy Hook orqali).
+#
+# Sozlash (bir marta): GitHub repo -> Settings -> Secrets and variables -> Actions ->
+#   New repository secret: RENDER_DEPLOY_HOOK = Render'dagi servis -> Settings -> Deploy Hook manzili.
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint va testlar
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chirchiq_arenda
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      BOT_TOKEN: "123456789:TEST_TOKEN_FOR_CI_ONLY"
+      ADMIN_IDS: "5170546966"
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chirchiq_arenda
+      SYNC_INTERVAL_MIN: "0"
+      KEEPALIVE_MIN: "0"
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Kutubxonalar
+        run: pip install -r requirements-dev.txt
+      - name: Lint (pyflakes)
+        run: python -m pyflakes bot tests
+      - name: Import tekshiruvi
+        run: python -c "from bot.webapp.server import create_app; from bot.handlers import admin, user; print('imports ok')"
+      - name: Testlar (pytest)
+        run: pytest -q
+
+  deploy:
+    name: Render'ga deploy
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy hook
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::RENDER_DEPLOY_HOOK secret yo'q — deploy o'tkazib yuborildi. Repo Settings -> Secrets ga qo'shing."
+            exit 0
+          fi
+          code=$(curl -s -o /tmp/out -w "%{http_code}" -X POST "$HOOK")
+          echo "Render javobi: $code"; cat /tmp/out; echo
+          [ "$code" -ge 200 ] && [ "$code" -lt 300 ]

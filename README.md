@@ -139,6 +139,20 @@ Repo'da tayyor [render.yaml](render.yaml) bor: Web Service (bot + Mini App) va P
 Boshqa hostinglar (Railway, Fly.io, VPS) uchun: `PORT` berilsa bot `0.0.0.0:$PORT` da tinglaydi,
 `WEBAPP_URL` ga ochiq HTTPS manzilni yozing.
 
+## CI/CD (GitHub Actions)
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml): har `main` ga push yoki PR da
+1. **Lint + testlar** — Ubuntu'da PostgreSQL 16 ko'tariladi, `pyflakes` va `pytest tests/` ishlaydi
+   (JWT, admin API, market, rollar, moderatsiya, scraper mapping). Soxta bot token — Telegram'ga so'rov ketmaydi.
+2. **Deploy** — faqat `main` ga push va testlar o'tganda: Render **Deploy Hook** chaqiriladi, Render eng
+   so'nggi commitni o'rnatadi. Shunday qilib serverda eski versiya qolib ketmaydi, buzuq kod esa deploy bo'lmaydi.
+
+Bir martalik sozlash: Render → servis → Settings → **Deploy Hook** manzilini nusxalang →
+GitHub repo → Settings → Secrets and variables → Actions → **New repository secret** →
+nomi `RENDER_DEPLOY_HOOK`, qiymati o'sha manzil. Secret bo'lmasa deploy bosqichi ogohlantirish bilan o'tkazib yuboriladi.
+
+Lokal test: `pip install -r requirements-dev.txt` → `pytest -q` (ishlayotgan PostgreSQL kerak, `.env` dan oladi).
+
 ## Loyiha tuzilishi
 
 ```
