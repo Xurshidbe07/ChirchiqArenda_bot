@@ -1,5 +1,7 @@
 # ChirchiqArendabot 🏠
 
+[![CI/CD](https://github.com/Xurshidbe07/ChirchiqArenda_bot/actions/workflows/ci.yml/badge.svg)](https://github.com/Xurshidbe07/ChirchiqArenda_bot/actions/workflows/ci.yml)
+
 Chirchiq shahrida ijaraga uylar bo'yicha Telegram bot.
 **Python 3.11+ · aiogram 3 · PostgreSQL (asyncpg)**
 
