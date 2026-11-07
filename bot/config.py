@@ -20,6 +20,7 @@ class Config:
     sync_interval_min: int = 30                 # 0 = avtomatik sinxronlash o'chiq
     joymee_districts: tuple[int, ...] = (166,)  # 166 = Chirchiq shahar
     joymee_categories: tuple[int, ...] = (4, 5) # 4 = Kvartira, 5 = Uy/dacha
+    joymee_deal_types: tuple[int, ...] = (2, 1) # 2 = oylik ijara, 1 = kunlik ijara
     usd_rate: int = 12500                       # 1 y.e necha so'm (filtr uchun)
     # Keep-alive: bepul hostingda (Render) server uxlab qolmasligi uchun o'ziga so'rov yuboradi
     keepalive_min: int = 10                     # 0 = o'chiq; Render 15 daqiqada uxlatadi, 10 yetarli
@@ -72,6 +73,7 @@ def load_config() -> Config:
         sync_interval_min=int(os.getenv("SYNC_INTERVAL_MIN", "30") or 0),
         joymee_districts=_parse_int_list(os.getenv("JOYMEE_DISTRICTS", ""), (166,)),
         joymee_categories=_parse_int_list(os.getenv("JOYMEE_CATEGORIES", ""), (4, 5)),
+        joymee_deal_types=_parse_int_list(os.getenv("JOYMEE_DEAL_TYPES", ""), (2, 1)),
         usd_rate=int(os.getenv("USD_RATE", "12500") or 12500),
     )
 

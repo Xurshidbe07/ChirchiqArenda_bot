@@ -1,7 +1,7 @@
 """Joymee (joymee.uz) dan Chirchiq ijara e'lonlarini tortish.
 
 Joymee'ning ochiq JSON API'si ishlatiladi (saytning o'zi ham shu API bilan ishlaydi):
-  GET https://api.joymee.uz/api/v1/announcement/?deal_type=2&district=166&ordering=newest&page=N
+  GET https://api.joymee.uz/api/v1/announcement/?deal_type={2|1}&district=166&ordering=newest&page=N
   GET https://api.joymee.uz/api/v1/announcement/{id}/
 
 deal_type: 1 = kunlik ijara, 2 = ijara, 3 = sotuv.
@@ -37,6 +37,17 @@ HEADERS = {
 PER_PAGE = 50
 MAX_PAGES = 20
 PAUSE = 0.4  # soniya, so'rovlar orasida
+
+
+# Kunlik ijara turkumlari (1 Kvartira, 2 Uy/dacha, 3 Mehmonxona) oylik turkumlarga (4, 5, 6) mos keladi
+_DAILY_TO_MONTHLY_CATEGORY = {1: 4, 2: 5, 3: 6}
+
+
+def category_allowed(category: int | None) -> bool:
+    """JOYMEE_CATEGORIES oylik turkum ID lari bilan beriladi; kunlik turkumlar shunga o'girib tekshiriladi."""
+    if category is None:
+        return False
+    return _DAILY_TO_MONTHLY_CATEGORY.get(category, category) in config.joymee_categories
 
 
 class JoymeeError(RuntimeError):
@@ -90,6 +101,7 @@ def map_detail(det: dict[str, Any]) -> dict[str, Any]:
     address = det.get("address_line") or ", ".join(p for p in (region, district) if p)
     stats = det.get("stats") or {}
     return {
+        "rent_period": "day" if det.get("deal_type") == 1 else "month",
         "title": (det.get("title") or "E'lon").strip()[:200],
         "address": address.strip()[:250],
         "rooms": rooms if rooms and 0 < rooms <= 50 else None,
@@ -115,18 +127,21 @@ def map_detail(det: dict[str, Any]) -> dict[str, Any]:
 async def fetch_listing_ids(session: aiohttp.ClientSession) -> dict[str, dict[str, Any]]:
     """Barcha sahifalardan e'lon qisqa ma'lumotlarini yig'adi: source_id -> listing item."""
     found: dict[str, dict[str, Any]] = {}
-    for district in config.joymee_districts:
-        page = 1
-        while page <= MAX_PAGES:
-            data = await _get(
-                session,
-                f"announcement/?deal_type=2&district={district}&ordering=newest&page={page}&perPagePlain={PER_PAGE}",
-            )
-            for item in data.get("results") or []:
-                found[str(item["id"])] = item
-            if page >= int(data.get("total_pages") or 1):
-                break
-            page += 1
+    for deal_type in config.joymee_deal_types:
+        for district in config.joymee_districts:
+            page = 1
+            while page <= MAX_PAGES:
+                data = await _get(
+                    session,
+                    f"announcement/?deal_type={deal_type}&district={district}"
+                    f"&ordering=newest&page={page}&perPagePlain={PER_PAGE}",
+                )
+                for item in data.get("results") or []:
+                    found[str(item["id"])] = item
+                if page >= int(data.get("total_pages") or 1):
+                    break
+                page += 1
+                await asyncio.sleep(PAUSE)
             await asyncio.sleep(PAUSE)
     return found
 
@@ -153,7 +168,7 @@ async def sync() -> dict[str, int]:
                 except JoymeeError as exc:
                     log.warning("Tafsilot olinmadi %s: %s", sid, exc)
                     continue
-                if det.get("category") not in config.joymee_categories:
+                if not category_allowed(det.get("category")):
                     seen_ids.remove(sid)  # tijorat/yer kabi keraksiz turkum — bizda bo'lmasin
                     continue
                 data = map_detail(det)

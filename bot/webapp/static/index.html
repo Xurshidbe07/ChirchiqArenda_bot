@@ -132,6 +132,8 @@
         <div><label><span data-i="f_price"></span> *</label><input name="price" type="number" min="0" required></div>
         <div><label data-i="f_currency"></label><select name="currency"><option value="UZS">so'm</option><option value="USD">y.e ($)</option></select></div>
       </div>
+      <label data-i="f_period"></label>
+      <select name="rent_period"><option value="month" data-i="period_month"></option><option value="day" data-i="period_day"></option></select>
       <div class="row">
         <div><label data-i="f_floor"></label><input name="floor" type="number" min="0" max="200"></div>
         <div><label data-i="f_floors"></label><input name="floors" type="number" min="1" max="200"></div>
@@ -155,6 +157,7 @@
       c_all: "Hammasi", c_pending: "⏳ Moderatsiya", c_active: "Faol", c_hidden: "Yashirilgan", c_clients: "Klient e'lonlari", c_auto: "Avtomatik", c_manual: "Qo'lda qo'shilgan",
       sync: "🔄 E'lonlarni yangilash", syncing: "⏳ Yangilanmoqda…", sync_last: "Oxirgi yangilanish", sync_never: "Hali yangilanmagan", sync_done: "Yangi {a}, yangilandi {u}, yopildi {d}", sync_err: "xato",
       add_house: "＋ Uy qo'shish", new_house: "➕ Yangi uy", f_title: "Nomi", f_address: "Manzil", f_district: "Mavze / tuman", f_rooms: "Xonalar", f_area: "Maydon, m²", f_price: "Narx (oyiga)", f_currency: "Valyuta", f_floor: "Qavat", f_floors: "Uy qavatlari", f_phone: "Telefon", f_desc: "Tavsif", f_photos: "Rasmlar (8 tagacha)", cancel: "Bekor qilish", save: "Saqlash", saving: "Saqlanmoqda…", saved: "Uy #{id} qo'shildi",
+      per_day: "/ kun", f_period: "Ijara turi", period_month: "Oylik", period_day: "Kunlik",
       b_active: "faol", b_hidden: "yashirin", b_pending: "moderatsiyada", b_rejected: "rad etilgan", b_manual: "qo'lda", b_client: "klient", owner: "Egasi", rooms: "xona", per_month: "/ oy", empty: "Uylar yo'q",
       hide: "🙈 Yashirish", show: "👁 Ko'rsatish", del: "🗑 O'chirish", del_confirm: "#{id} «{t}» o'chirilsinmi?", deleted: "O'chirildi", approve: "✅ Tasdiqlash", reject: "❌ Rad etish", reject_reason: "Rad etish sababi", approved: "Tasdiqlandi ✅", rejected: "Rad etildi", reason: "Sabab",
       u_search: "Ism, @username yoki ID bo'yicha qidirish", u_active: "Faol", u_blocked: "Bloklangan", u_title: "Klientlar", u_hint: "✅ — faol, 🚫 — bloklangan", u_empty: "Klientlar topilmadi", block: "🚫 Bloklash", unblock: "✅ Blokdan chiqarish", block_reason: "Sabab (ixtiyoriy)", blocked: "Bloklandi", unblocked: "Blokdan chiqarildi", registered: "ro'yxatdan o'tgan",
@@ -164,6 +167,7 @@
       c_all: "Все", c_pending: "⏳ Модерация", c_active: "Активные", c_hidden: "Скрытые", c_clients: "От клиентов", c_auto: "Автоматические", c_manual: "Добавленные вручную",
       sync: "🔄 Обновить объявления", syncing: "⏳ Обновление…", sync_last: "Последнее обновление", sync_never: "Ещё не обновлялось", sync_done: "Новых {a}, обновлено {u}, закрыто {d}", sync_err: "ошибка",
       add_house: "＋ Добавить жильё", new_house: "➕ Новое объявление", f_title: "Название", f_address: "Адрес", f_district: "Район", f_rooms: "Комнат", f_area: "Площадь, м²", f_price: "Цена (в месяц)", f_currency: "Валюта", f_floor: "Этаж", f_floors: "Этажей", f_phone: "Телефон", f_desc: "Описание", f_photos: "Фото (до 8)", cancel: "Отмена", save: "Сохранить", saving: "Сохранение…", saved: "Объявление #{id} добавлено",
+      per_day: "/ сутки", f_period: "Тип аренды", period_month: "Помесячно", period_day: "Посуточно",
       b_active: "активно", b_hidden: "скрыто", b_pending: "на модерации", b_rejected: "отклонено", b_manual: "вручную", b_client: "клиент", owner: "Владелец", rooms: "комн.", per_month: "/ мес", empty: "Объявлений нет",
       hide: "🙈 Скрыть", show: "👁 Показать", del: "🗑 Удалить", del_confirm: "Удалить #{id} «{t}»?", deleted: "Удалено", approve: "✅ Одобрить", reject: "❌ Отклонить", reject_reason: "Причина отказа", approved: "Одобрено ✅", rejected: "Отклонено", reason: "Причина",
       u_search: "Поиск по имени, @username или ID", u_active: "Активные", u_blocked: "Заблокированные", u_title: "Клиенты", u_hint: "✅ — активен, 🚫 — заблокирован", u_empty: "Клиенты не найдены", block: "🚫 Заблокировать", unblock: "✅ Разблокировать", block_reason: "Причина (необязательно)", blocked: "Заблокирован", unblocked: "Разблокирован", registered: "зарегистрирован",
@@ -173,6 +177,7 @@
       c_all: "All", c_pending: "⏳ Review", c_active: "Active", c_hidden: "Hidden", c_clients: "From clients", c_auto: "Automatic", c_manual: "Added manually",
       sync: "🔄 Refresh listings", syncing: "⏳ Refreshing…", sync_last: "Last refresh", sync_never: "Not refreshed yet", sync_done: "New {a}, updated {u}, closed {d}", sync_err: "error",
       add_house: "＋ Add listing", new_house: "➕ New listing", f_title: "Title", f_address: "Address", f_district: "District", f_rooms: "Rooms", f_area: "Area, m²", f_price: "Price (per month)", f_currency: "Currency", f_floor: "Floor", f_floors: "Floors", f_phone: "Phone", f_desc: "Description", f_photos: "Photos (up to 8)", cancel: "Cancel", save: "Save", saving: "Saving…", saved: "Listing #{id} added",
+      per_day: "/ day", f_period: "Rental type", period_month: "Monthly", period_day: "Daily",
       b_active: "active", b_hidden: "hidden", b_pending: "under review", b_rejected: "rejected", b_manual: "manual", b_client: "client", owner: "Owner", rooms: "rooms", per_month: "/ month", empty: "No listings",
       hide: "🙈 Hide", show: "👁 Show", del: "🗑 Delete", del_confirm: "Delete #{id} “{t}”?", deleted: "Deleted", approve: "✅ Approve", reject: "❌ Reject", reject_reason: "Rejection reason", approved: "Approved ✅", rejected: "Rejected", reason: "Reason",
       u_search: "Search by name, @username or ID", u_active: "Active", u_blocked: "Blocked", u_title: "Clients", u_hint: "✅ — active, 🚫 — blocked", u_empty: "No clients found", block: "🚫 Block", unblock: "✅ Unblock", block_reason: "Reason (optional)", blocked: "Blocked", unblocked: "Unblocked", registered: "registered",
@@ -261,7 +266,7 @@
           <div class="meta">📍 ${esc(h.district || h.address)}${h.rooms ? " · 🚪 " + h.rooms + " " + tr("rooms") : ""}${h.contact_phone ? " · 📞 " + esc(h.contact_phone) : ""}</div>
           ${h.is_client_ad ? `<div class="meta">👤 ${tr("owner")}: ${esc(h.owner_name || "")}${h.owner_username ? " @" + esc(h.owner_username) : ""} · ID ${h.owner_id}</div>` : ""}
           ${h.reject_reason ? `<div class="meta">${tr("reason")}: ${esc(h.reject_reason)}</div>` : ""}
-          <div class="price">${priceStr(h)} ${tr("per_month")}${h.views ? ` <span style="color:var(--hint);font-weight:400;font-size:12px">· 👁 ${h.views}</span>` : ""}</div>
+          <div class="price">${priceStr(h)} ${h.rent_period === "day" ? tr("per_day") : tr("per_month")}${h.views ? ` <span style="color:var(--hint);font-weight:400;font-size:12px">· 👁 ${h.views}</span>` : ""}</div>
           <div class="actions">
             ${h.status === "pending" ? `<button class="ok" data-act="approve">${tr("approve")}</button><button class="danger" data-act="reject">${tr("reject")}</button>` : ""}
             ${h.status === "rejected" ? `<button class="ok" data-act="approve">${tr("approve")}</button>` : ""}
@@ -323,6 +328,7 @@
         <div class="body">
           <div class="title">${esc(u.full_name) || "—"} ${u.is_blocked ? `<span class="badge danger">${tr("u_blocked").toLowerCase()}</span>` : ""}${u.registered ? `<span class="badge ok">${tr("registered")}</span>` : ""}</div>
           <div class="meta">${u.username ? "@" + esc(u.username) + " · " : ""}ID ${u.telegram_id}${u.phone ? " · 📞 " + esc(u.phone) : ""}${u.lang ? " · " + u.lang.toUpperCase() : ""}</div>
+          ${u.address ? `<div class="meta">📍 ${esc(u.address)}</div>` : ""}
           ${u.is_blocked && u.block_reason ? `<div class="meta">${tr("reason")}: ${esc(u.block_reason)}</div>` : ""}
           <div class="actions">${u.is_blocked ? `<button class="ok" data-act="unblock">${tr("unblock")}</button>` : `<button class="danger" data-act="block">${tr("block")}</button>`}</div>
           <div class="reason hidden"><input maxlength="300" placeholder="${tr("block_reason")}"><button class="danger" data-act="block-confirm">${tr("block")}</button></div>

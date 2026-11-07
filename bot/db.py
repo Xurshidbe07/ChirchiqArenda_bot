@@ -82,17 +82,22 @@ async def set_phone(telegram_id: int, phone: str) -> None:
     await pool().execute("UPDATE users SET phone = $2 WHERE telegram_id = $1", telegram_id, phone)
 
 
-async def complete_registration(telegram_id: int, full_name: str, phone: str, role: str) -> asyncpg.Record:
-    """Market ro'yxatdan o'tishini yakunlaydi (yoki profilni yangilaydi)."""
+async def complete_registration(telegram_id: int, first_name: str, last_name: str, phone: str,
+                                role: str, address: str) -> asyncpg.Record:
+    """Market ro'yxatdan o'tishini yakunlaydi (yoki profilni yangilaydi).
+
+    telegram_id va username allaqachon upsert_user orqali yozilgan.
+    """
+    full_name = " ".join(p for p in (first_name, last_name) if p)
     return await pool().fetchrow(
         """
         UPDATE users
-           SET full_name = $2, phone = $3, role = $4,
+           SET first_name = $2, last_name = $3, full_name = $4, phone = $5, role = $6, address = $7,
                registered_at = COALESCE(registered_at, NOW())
          WHERE telegram_id = $1
         RETURNING *
         """,
-        telegram_id, full_name, phone, role,
+        telegram_id, first_name, last_name, full_name, phone, role, address,
     )
 
 
@@ -107,6 +112,7 @@ async def list_users(offset: int = 0, limit: int = 10, blocked: bool | None = No
     if q:
         args.append(f"%{q.strip()}%")
         conds.append(f"(full_name ILIKE ${len(args)} OR username ILIKE ${len(args)} "
+                     f"OR phone ILIKE ${len(args)} OR address ILIKE ${len(args)} "
                      f"OR telegram_id::text LIKE ${len(args)})")
     where = f"WHERE {' AND '.join(conds)}" if conds else ""
     return await pool().fetch(
@@ -203,6 +209,7 @@ async def add_house(
     floors: int | None = None,
     owner_id: int | None = None,
     status: str = "approved",
+    rent_period: str = "month",
 ) -> int:
     """Admin yoki klient qo'shgan uy. Rasmlar Telegram file_id (photo_urls da tg: prefiksi bilan)."""
     ids = list(photo_file_ids or [])
@@ -212,13 +219,13 @@ async def add_house(
         """
         INSERT INTO houses (title, address, rooms, price, currency, price_uzs, description,
                             photo_file_id, photo_urls, contact_phone, created_by, district,
-                            area, floor, floors, owner_id, status, source, last_seen_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'admin', NOW())
+                            area, floor, floors, owner_id, status, rent_period, source, last_seen_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, 'admin', NOW())
         RETURNING id
         """,
         title, address, rooms, price, currency, to_uzs(price, currency), description,
         ids[0] if ids else None, [f"tg:{i}" for i in ids], contact_phone, created_by, district,
-        area, floor, floors, owner_id, status,
+        area, floor, floors, owner_id, status, rent_period,
     )
 
 
@@ -230,11 +237,12 @@ async def upsert_external_house(source: str, source_id: str, d: dict[str, Any]) 
         INSERT INTO houses (title, address, rooms, price, currency, price_uzs, description,
                             contact_phone, district, area, floor, floors, photo_urls,
                             seller_name, seller_username, lat, lon, external_created_at,
-                            source, source_id, source_url, last_seen_at, is_active, views, status)
+                            source, source_id, source_url, last_seen_at, is_active, views, status, rent_period)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
-                $19, $20, $21, NOW(), TRUE, $22, 'approved')
+                $19, $20, $21, NOW(), TRUE, $22, 'approved', $23)
         ON CONFLICT (source, source_id) WHERE source_id IS NOT NULL DO UPDATE SET
             title = EXCLUDED.title, address = EXCLUDED.address, rooms = EXCLUDED.rooms,
+            rent_period = EXCLUDED.rent_period,
             price = EXCLUDED.price, currency = EXCLUDED.currency, price_uzs = EXCLUDED.price_uzs,
             description = EXCLUDED.description, contact_phone = EXCLUDED.contact_phone,
             district = EXCLUDED.district, area = EXCLUDED.area, floor = EXCLUDED.floor,
@@ -251,7 +259,7 @@ async def upsert_external_house(source: str, source_id: str, d: dict[str, Any]) 
         d.get("description", ""), d.get("contact_phone"), d.get("district"), d.get("area"),
         d.get("floor"), d.get("floors"), d.get("photo_urls", []), d.get("seller_name"),
         d.get("seller_username"), d.get("lat"), d.get("lon"), d.get("external_created_at"),
-        source, source_id, d.get("source_url"), d.get("views", 0),
+        source, source_id, d.get("source_url"), d.get("views", 0), d.get("rent_period", "month"),
     )
     return row["id"], bool(row["inserted"])
 
@@ -395,12 +403,16 @@ async def market_houses(
     price_max: Decimal | None = None,
     district: str | None = None,
     source: str | None = None,
+    period: str | None = None,          # month | day
     sort: str = "new",
     offset: int = 0,
     limit: int = 20,
 ) -> list[asyncpg.Record]:
     conds = [PUBLIC_COND]
     args: list[Any] = [viewer_id, limit, offset]
+    if period in ("month", "day"):
+        args.append(period)
+        conds.append(f"h.rent_period = ${len(args)}")
     if q:
         args.append(f"%{q.strip()}%")
         conds.append(f"(h.title ILIKE ${len(args)} OR h.address ILIKE ${len(args)} "

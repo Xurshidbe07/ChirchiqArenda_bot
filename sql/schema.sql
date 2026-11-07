@@ -74,12 +74,17 @@ CREATE TABLE IF NOT EXISTS favorites (
 -- ===================== Tillar, klient e'lonlari (moderatsiya), adminlar =====================
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS lang TEXT;                -- uz | ru | en (NULL = hali tanlamagan)
+-- To'liq ro'yxatdan o'tish ma'lumotlari (ism/familiya/manzil); telegram_id va username yuqorida
+ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name  TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address    TEXT;
 
 ALTER TABLE houses ADD COLUMN IF NOT EXISTS status        TEXT NOT NULL DEFAULT 'approved'; -- pending|approved|rejected
 ALTER TABLE houses ADD COLUMN IF NOT EXISTS owner_id      BIGINT;    -- e'lonni bergan klient (admin/tashqi bo'lsa NULL)
 ALTER TABLE houses ADD COLUMN IF NOT EXISTS reject_reason TEXT;
 ALTER TABLE houses ADD COLUMN IF NOT EXISTS moderated_by  BIGINT;
 ALTER TABLE houses ADD COLUMN IF NOT EXISTS moderated_at  TIMESTAMPTZ;
+ALTER TABLE houses ADD COLUMN IF NOT EXISTS rent_period   TEXT NOT NULL DEFAULT 'month'; -- month | day (kunlik ijara)
 
 DO $$
 BEGIN

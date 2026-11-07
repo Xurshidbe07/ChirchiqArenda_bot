@@ -148,15 +148,26 @@ def test_market_registration_posting_and_favorites():
 
             st, body = await s.call("POST", "/api/market/my", headers=C, data=_house_form())
             assert st == 403 and "REGISTER_REQUIRED" in body
-            st, body = await s.call("POST", "/api/market/register", headers={**C, **JSON},
-                                    json={"full_name": "Sinov", "role": "tenant", "phone": "12345"})
+            reg = {"first_name": "Sinov", "last_name": "Klient", "address": "Chirchiq, 5-mavze", "role": "landlord"}
+            st, body = await s.call("POST", "/api/market/register", headers={**C, **JSON}, json={**reg, "phone": "12345"})
             assert st == 400 and "PHONE_INVALID" in body
-            st, u = await s.call("POST", "/api/market/register", headers={**C, **JSON},
-                                 json={"full_name": "Sinov Klient", "role": "landlord", "phone": "90 123 45 67"})
+            st, body = await s.call("POST", "/api/market/register", headers={**C, **JSON}, json={**reg, "last_name": "", "phone": "901234567"})
+            assert st == 400 and "LASTNAME_REQUIRED" in body
+            st, body = await s.call("POST", "/api/market/register", headers={**C, **JSON}, json={**reg, "address": "", "phone": "901234567"})
+            assert st == 400 and "ADDRESS_REQUIRED" in body
+            st, u = await s.call("POST", "/api/market/register", headers={**C, **JSON}, json={**reg, "phone": "90 123 45 67"})
             assert st == 200 and u["registered"] and u["phone"] == "+998901234567"
+            assert u["first_name"] == "Sinov" and u["last_name"] == "Klient" and u["full_name"] == "Sinov Klient"
+            assert u["address"] == "Chirchiq, 5-mavze" and u["telegram_id"] == CLIENT and u["username"] == f"u{CLIENT}"
 
-            st, ad = await s.call("POST", "/api/market/my", headers=C, data=_house_form(title="Klient uyi"))
+            st, ad = await s.call("POST", "/api/market/my", headers=C, data=_house_form(title="Klient uyi", rent_period="day"))
             assert st == 201 and ad["currency"] == "USD" and ad["contact_phone"] == "+998901234567"
+            assert ad["rent_period"] == "day"
+            if ad["status"] == "approved":
+                st, daily = await s.call("GET", "/api/market/houses?period=day&q=Klient uyi", headers=C)
+                assert any(h["id"] == ad["id"] for h in daily["items"])
+                st, monthly = await s.call("GET", "/api/market/houses?period=month&q=Klient uyi", headers=C)
+                assert all(h["id"] != ad["id"] for h in monthly["items"])
             assert ad["status"] in ("approved", "pending")
             st, mine = await s.call("GET", "/api/market/my", headers=C)
             assert st == 200 and [h["id"] for h in mine] == [ad["id"]]
@@ -206,7 +217,8 @@ def test_superadmin_manages_admins_and_moderation():
 
             # Klient e'loni + moderatsiya API (MODERATION o'chiq bo'lsa ham API ishlaydi)
             assert (await s.call("POST", "/api/market/register", headers={**C, **JSON},
-                                 json={"full_name": "Sinov", "role": "tenant", "phone": "901112233"}))[0] == 200
+                                 json={"first_name": "Sinov", "last_name": "Klient", "address": "Chirchiq",
+                                       "role": "tenant", "phone": "901112233"}))[0] == 200
             st, ad = await s.call("POST", "/api/market/my", headers=C, data=_house_form(title="Moderatsiya uyi"))
             assert st == 201
             st, rej = await s.call("POST", f"/api/houses/{ad['id']}/moderate", headers={**A, **JSON},
@@ -253,6 +265,8 @@ def test_joymee_detail_mapping():
     }
     m = map_detail(det)
     assert m["title"] == "Kvartira" and m["price"] == Decimal("400.00") and m["currency"] == "USD"
+    assert m["rent_period"] == "month"
+    assert map_detail({**det, "deal_type": 1})["rent_period"] == "day"
     assert m["photo_urls"] == ["https://cdn/1.jpg", "https://cdn/2.jpg"]  # muqova birinchi
     assert m["rooms"] == 2 and m["area"] == Decimal("46.60") and m["floor"] == 5 and m["floors"] == 7
     assert m["district"] == "Chirchiq shahar" and m["seller_name"] == "Ali V" and m["views"] == 60

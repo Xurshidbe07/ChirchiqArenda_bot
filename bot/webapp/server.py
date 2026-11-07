@@ -145,6 +145,7 @@ def _house_json(h, *, public: bool = False) -> dict[str, Any]:
         "price": float(h["price"]),
         "currency": h["currency"],
         "price_uzs": float(h["price_uzs"]) if h["price_uzs"] is not None else None,
+        "rent_period": h["rent_period"],
         "description": h["description"],
         "photos": photos,
         "contact_phone": h["contact_phone"],
@@ -174,8 +175,11 @@ def _user_json(u) -> dict[str, Any]:
     return {
         "telegram_id": u["telegram_id"],
         "full_name": u["full_name"],
+        "first_name": u["first_name"],
+        "last_name": u["last_name"],
         "username": u["username"],
         "phone": u["phone"],
+        "address": u["address"],
         "role": u["role"],
         "lang": u["lang"],
         "registered": u["registered_at"] is not None,
@@ -217,6 +221,7 @@ def _parse_house_form(form) -> dict[str, Any]:
     description = str(form.get("description", "")).strip()[:1500]
     contact_phone = str(form.get("contact_phone", "")).strip()[:30] or None
     currency = "USD" if str(form.get("currency", "UZS")).upper() in ("USD", "Y.E", "YE") else "UZS"
+    rent_period = "day" if str(form.get("rent_period", "month")).lower() == "day" else "month"
     if not title or not address:
         raise _bad("Nom va manzil majburiy.")
     try:
@@ -252,8 +257,9 @@ def _parse_house_form(form) -> dict[str, Any]:
     except InvalidOperation:
         raise _bad("Maydon noto'g'ri.")
     return dict(title=title, address=address, district=district, rooms=rooms, price=price,
-                currency=currency, description=description, contact_phone=contact_phone,
-                area=area, floor=_opt_int("floor", 0, 200), floors=_opt_int("floors", 1, 200))
+                currency=currency, rent_period=rent_period, description=description,
+                contact_phone=contact_phone, area=area,
+                floor=_opt_int("floor", 0, 200), floors=_opt_int("floors", 1, 200))
 
 
 async def _upload_photos(request: web.Request, form, caption: str) -> list[str]:
@@ -550,11 +556,21 @@ async def m_lang(request: web.Request) -> web.Response:
 
 
 async def m_register(request: web.Request) -> web.Response:
+    """{first_name, last_name, address, role, phone | contact_response}
+
+    Telegram ID va username initData'dan avtomatik olinadi (upsert_user), klient kiritmaydi.
+    """
     body = await request.json()
-    full_name = str(body.get("full_name", "")).strip()[:100]
+    first_name = str(body.get("first_name", "")).strip()[:60]
+    last_name = str(body.get("last_name", "")).strip()[:60]
+    address = str(body.get("address", "")).strip()[:250]
     role = body.get("role")
-    if len(full_name) < 2:
+    if len(first_name) < 2:
         raise _bad("NAME_REQUIRED")
+    if len(last_name) < 2:
+        raise _bad("LASTNAME_REQUIRED")
+    if len(address) < 3:
+        raise _bad("ADDRESS_REQUIRED")
     if role not in ("tenant", "landlord"):
         raise _bad("ROLE_REQUIRED")
 
@@ -575,7 +591,7 @@ async def m_register(request: web.Request) -> web.Response:
     if not PHONE_RE.match(phone):
         raise _bad("PHONE_INVALID")
 
-    u = await db.complete_registration(request["tg_user"].id, full_name, phone, role)
+    u = await db.complete_registration(request["tg_user"].id, first_name, last_name, phone, role, address)
     return web.json_response(_user_json(u))
 
 
@@ -592,6 +608,7 @@ async def m_houses(request: web.Request) -> web.Response:
         price_max=_dec(q.get("price_max")),
         district=q.get("district", "").strip() or None,
         source=q.get("source", "").strip() or None,
+        period=q.get("period", "").strip() or None,
         sort=q.get("sort", "new"),
         offset=page * per_page,
         limit=per_page,

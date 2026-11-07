@@ -108,15 +108,20 @@
 <section id="reg" class="page hidden">
   <h2 data-i="reg_title"></h2>
   <p class="sub" id="reg-sub"></p>
-  <label data-i="name"></label>
-  <input id="r-name" maxlength="100">
+  <div class="row">
+    <div><label><span data-i="first_name"></span> *</label><input id="r-first" maxlength="60"></div>
+    <div><label><span data-i="last_name"></span> *</label><input id="r-last" maxlength="60"></div>
+  </div>
+  <label><span data-i="address"></span> *</label>
+  <input id="r-address" maxlength="250">
   <label data-i="who"></label>
   <div class="roles">
     <div data-role="tenant" class="active"><b>🔑</b><span data-i="tenant"></span><br><small style="color:var(--hint)" data-i="tenant_sub"></small></div>
     <div data-role="landlord"><b>🏠</b><span data-i="landlord"></span><br><small style="color:var(--hint)" data-i="landlord_sub"></small></div>
   </div>
-  <label data-i="phone"></label>
+  <label><span data-i="phone"></span> *</label>
   <input id="r-phone" inputmode="tel" placeholder="+998 90 123 45 67">
+  <p style="color:var(--hint);font-size:12px;margin:8px 0 0" id="r-tg"></p>
   <div class="err" id="r-err"></div>
   <div class="actions">
     <button class="primary" id="r-contact" data-i="share_contact"></button>
@@ -145,6 +150,8 @@
       <div><label><span data-i="p_price"></span> *</label><input name="price" type="number" min="0" required></div>
       <div><label data-i="p_currency"></label><select name="currency"><option value="UZS">so'm</option><option value="USD">y.e ($)</option></select></div>
     </div>
+    <label data-i="p_period"></label>
+    <select name="rent_period"><option value="month" data-i="period_month"></option><option value="day" data-i="period_day"></option></select>
     <label data-i="p_phone"></label><input name="contact_phone" maxlength="30">
     <label data-i="p_desc"></label><textarea name="description" maxlength="1500"></textarea>
     <label data-i="p_photos"></label><input name="photos" type="file" accept="image/*" multiple>
@@ -199,6 +206,8 @@
     <div class="row"><input id="f-min" inputmode="numeric"><input id="f-max" inputmode="numeric"></div>
     <label data-i="f_district"></label>
     <select id="f-district"></select>
+    <label data-i="f_period"></label>
+    <select id="f-period"><option value="" data-i="f_all"></option><option value="month" data-i="period_month"></option><option value="day" data-i="period_day"></option></select>
     <div class="actions"><button id="f-reset" data-i="f_reset"></button><button class="primary" id="f-apply" data-i="f_apply"></button></div>
   </div>
 </div>
@@ -214,7 +223,9 @@
       s_new: "Eng yangi", s_cheap: "Arzon → qimmat", s_expensive: "Qimmat → arzon", s_popular: "Ommabop",
       count: "{n} ta e'lon", more: "Yana ko'rsatish", loading: "Yuklanmoqda…", empty: "E'lonlar topilmadi", favs_title: "❤️ Sevimlilar",
       n_houses: "Uylar", n_favs: "Sevimlilar", n_post: "E'lon berish", n_profile: "Profil",
-      per_month: "/ oy", rooms: "xona", now: "hozirgina", hours: "{n} soat oldin", yesterday: "kecha", days: "{n} kun oldin",
+      per_month: "/ oy", per_day: "/ kun", period_month: "Oylik", period_day: "Kunlik", f_period: "Ijara turi", p_period: "Ijara turi",
+      first_name: "Ism", last_name: "Familiya", address: "Yashash manzili", address_ph: "Chirchiq, Yoshlik mavzesi 12-uy", err_lastname: "Familiyangizni kiriting.", err_address: "Yashash manzilingizni kiriting.", tg_note: "Telegram ID va username avtomatik saqlanadi",
+      pr_address: "Manzil", rooms: "xona", now: "hozirgina", hours: "{n} soat oldin", yesterday: "kecha", days: "{n} kun oldin",
       d_rooms: "Xonalar", d_area: "Maydon", d_floor: "Qavat", d_district: "Mavze", no_desc: "Tavsif yo'q.", owner: "Uy egasi / rieltor",
       call: "📞 Qo'ng'iroq qilish", no_phone: "Telefon ko'rsatilmagan", close: "Yopish",
       st_pending: "moderatsiyada", st_approved: "tasdiqlangan", st_rejected: "rad etilgan", reason: "Sabab",
@@ -236,7 +247,9 @@
       s_new: "Сначала новые", s_cheap: "Дешевле → дороже", s_expensive: "Дороже → дешевле", s_popular: "Популярные",
       count: "{n} объявлений", more: "Показать ещё", loading: "Загрузка…", empty: "Объявлений не найдено", favs_title: "❤️ Избранное",
       n_houses: "Жильё", n_favs: "Избранное", n_post: "Подать", n_profile: "Профиль",
-      per_month: "/ мес", rooms: "комн.", now: "только что", hours: "{n} ч. назад", yesterday: "вчера", days: "{n} дн. назад",
+      per_month: "/ мес", per_day: "/ сутки", period_month: "Помесячно", period_day: "Посуточно", f_period: "Тип аренды", p_period: "Тип аренды",
+      first_name: "Имя", last_name: "Фамилия", address: "Адрес проживания", address_ph: "Чирчик, массив Ёшлик, дом 12", err_lastname: "Введите фамилию.", err_address: "Введите адрес проживания.", tg_note: "Telegram ID и username сохраняются автоматически",
+      pr_address: "Адрес", rooms: "комн.", now: "только что", hours: "{n} ч. назад", yesterday: "вчера", days: "{n} дн. назад",
       d_rooms: "Комнаты", d_area: "Площадь", d_floor: "Этаж", d_district: "Район", no_desc: "Описания нет.", owner: "Владелец / риелтор",
       call: "📞 Позвонить", no_phone: "Телефон не указан", close: "Закрыть",
       st_pending: "на модерации", st_approved: "одобрено", st_rejected: "отклонено", reason: "Причина",
@@ -258,7 +271,9 @@
       s_new: "Newest", s_cheap: "Cheap → expensive", s_expensive: "Expensive → cheap", s_popular: "Popular",
       count: "{n} listings", more: "Show more", loading: "Loading…", empty: "No listings found", favs_title: "❤️ Favorites",
       n_houses: "Housing", n_favs: "Favorites", n_post: "Post", n_profile: "Profile",
-      per_month: "/ month", rooms: "rooms", now: "just now", hours: "{n} h ago", yesterday: "yesterday", days: "{n} d ago",
+      per_month: "/ month", per_day: "/ day", period_month: "Monthly", period_day: "Daily", f_period: "Rental type", p_period: "Rental type",
+      first_name: "First name", last_name: "Last name", address: "Home address", address_ph: "Chirchiq, Yoshlik district, house 12", err_lastname: "Enter your last name.", err_address: "Enter your home address.", tg_note: "Telegram ID and username are saved automatically",
+      pr_address: "Address", rooms: "rooms", now: "just now", hours: "{n} h ago", yesterday: "yesterday", days: "{n} d ago",
       d_rooms: "Rooms", d_area: "Area", d_floor: "Floor", d_district: "District", no_desc: "No description.", owner: "Owner / agent",
       call: "📞 Call", no_phone: "No phone provided", close: "Close",
       st_pending: "under review", st_approved: "approved", st_rejected: "rejected", reason: "Reason",
@@ -283,7 +298,7 @@
     document.querySelectorAll("[data-i]").forEach((el) => { el.textContent = tr(el.dataset.i); });
     $("#q").placeholder = tr("search_ph"); $("#fbtn").textContent = filtersOn() ? tr("filter_on") : tr("filter");
     $("#f-min").placeholder = tr("f_from"); $("#f-max").placeholder = tr("f_to");
-    $("#r-name").placeholder = tr("name");
+    $("#r-first").placeholder = tr("first_name"); $("#r-last").placeholder = tr("last_name"); $("#r-address").placeholder = tr("address_ph");
   }
 
   // ================= asoslar =================
@@ -295,13 +310,14 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const money = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   const priceStr = (h) => h.currency === "USD" ? `${money(h.price)} y.e` : `${money(h.price)} so'm`;
+  const perStr = (h) => h.rent_period === "day" ? tr("per_day") : tr("per_month");
   const uzsStr = (h) => h.currency === "USD" && h.price_uzs ? `≈ ${money(h.price_uzs)} so'm` : "";
   const ago = (iso) => { const d = (Date.now() - new Date(iso)) / 36e5; if (d < 1) return tr("now"); if (d < 24) return tr("hours", { n: Math.floor(d) }); const days = Math.floor(d / 24); return days === 1 ? tr("yesterday") : tr("days", { n: days }); };
   let toastTimer; function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2400); }
   const haptic = (t) => { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(t); } catch (e) {} };
   const photo = (u) => u.startsWith("/api/photo/") ? u + "?_auth=" + encodeURIComponent(initData) : u;
   const confirmDlg = (msg) => new Promise((res) => { if (inTelegram && tg.showConfirm) tg.showConfirm(msg, res); else res(window.confirm(msg)); });
-  const errText = (e) => ({ REGISTER_REQUIRED: tr("reg_sub_post"), NAME_REQUIRED: tr("err_name"), ROLE_REQUIRED: tr("err_role"), PHONE_INVALID: tr("err_phone"), NOT_FOUND: tr("empty") }[e.message.split(":")[0]] || e.message);
+  const errText = (e) => ({ REGISTER_REQUIRED: tr("reg_sub_post"), NAME_REQUIRED: tr("err_name"), LASTNAME_REQUIRED: tr("err_lastname"), ADDRESS_REQUIRED: tr("err_address"), ROLE_REQUIRED: tr("err_role"), PHONE_INVALID: tr("err_phone"), NOT_FOUND: tr("empty") }[e.message.split(":")[0]] || e.message);
 
   async function api(path, opts = {}) {
     const headers = Object.assign({ Authorization: "tma " + initData }, opts.headers || {});
@@ -312,8 +328,8 @@
   if (!initData) { $("#gate").classList.remove("hidden"); applyI18n(); return; }
 
   let me = null, role = "tenant", afterReg = null;
-  const state = { q: "", rooms: "", min: "", max: "", district: "", sort: "new", page: 0, items: [], favs: [] };
-  const filtersOn = () => !!(state.min || state.max || state.district);
+  const state = { q: "", rooms: "", min: "", max: "", district: "", period: "", sort: "new", page: 0, items: [], favs: [] };
+  const filtersOn = () => !!(state.min || state.max || state.district || state.period);
 
   // ================= sahifalar =================
   function show(page) {
@@ -340,17 +356,22 @@
   function openReg(forPost) {
     afterReg = forPost ? "post" : null;
     $("#reg-sub").textContent = forPost ? tr("reg_sub_post") : tr("reg_sub");
-    $("#r-name").value = me.full_name || me.tg_name || ""; $("#r-phone").value = me.phone || ""; $("#r-err").textContent = "";
+    const tgParts = (me.tg_name || "").split(" ");
+    $("#r-first").value = me.first_name || tgParts[0] || ""; $("#r-last").value = me.last_name || tgParts.slice(1).join(" ") || "";
+    $("#r-address").value = me.address || ""; $("#r-phone").value = me.phone || ""; $("#r-err").textContent = "";
+    $("#r-tg").textContent = `${tr("tg_note")}: ${me.username ? "@" + me.username + ", " : ""}ID ${me.telegram_id}`;
     role = me.role || "tenant"; document.querySelectorAll(".roles div").forEach((x) => x.classList.toggle("active", x.dataset.role === role));
     $("#r-contact").classList.toggle("hidden", !inTelegram);
     show("reg");
   }
   async function register(payload) {
     $("#r-err").textContent = "";
-    const name = $("#r-name").value.trim();
-    if (name.length < 2) { $("#r-err").textContent = tr("err_name"); return; }
+    const first = $("#r-first").value.trim(), last = $("#r-last").value.trim(), address = $("#r-address").value.trim();
+    if (first.length < 2) { $("#r-err").textContent = tr("err_name"); return; }
+    if (last.length < 2) { $("#r-err").textContent = tr("err_lastname"); return; }
+    if (address.length < 3) { $("#r-err").textContent = tr("err_address"); return; }
     try {
-      const u = await api("/api/market/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ full_name: name, role }, payload)) });
+      const u = await api("/api/market/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ first_name: first, last_name: last, address, role }, payload)) });
       Object.assign(me, u); haptic("success"); toast(tr("reg_saved"));
       if (afterReg === "post") { afterReg = null; openPost(); } else showApp("prof");
     } catch (e) { haptic("error"); $("#r-err").textContent = errText(e); }
@@ -388,14 +409,14 @@
   $("#more").addEventListener("click", () => loadFeed(false));
   $("#fbtn").addEventListener("click", () => $("#fsheet").classList.remove("hidden"));
   $("#fsheet").addEventListener("click", (e) => { if (e.target === $("#fsheet")) $("#fsheet").classList.add("hidden"); });
-  $("#f-apply").addEventListener("click", () => { state.min = $("#f-min").value.replace(/\D/g, ""); state.max = $("#f-max").value.replace(/\D/g, ""); state.district = $("#f-district").value; $("#fsheet").classList.add("hidden"); $("#fbtn").textContent = filtersOn() ? tr("filter_on") : tr("filter"); loadFeed(true); });
-  $("#f-reset").addEventListener("click", () => { $("#f-min").value = ""; $("#f-max").value = ""; $("#f-district").value = ""; $("#f-apply").click(); });
+  $("#f-apply").addEventListener("click", () => { state.min = $("#f-min").value.replace(/\D/g, ""); state.max = $("#f-max").value.replace(/\D/g, ""); state.district = $("#f-district").value; state.period = $("#f-period").value; $("#fsheet").classList.add("hidden"); $("#fbtn").textContent = filtersOn() ? tr("filter_on") : tr("filter"); loadFeed(true); });
+  $("#f-reset").addEventListener("click", () => { $("#f-min").value = ""; $("#f-max").value = ""; $("#f-district").value = ""; $("#f-period").value = ""; $("#f-apply").click(); });
   async function loadDistricts() {
     try { const ds = await api("/api/market/districts"); $("#f-district").innerHTML = `<option value="">${tr("f_all")}</option>` + ds.map((d) => `<option>${esc(d)}</option>`).join(""); $("#districts").innerHTML = ds.map((d) => `<option value="${esc(d)}">`).join(""); } catch (e) {}
   }
   async function loadFeed(reset) {
     if (reset) { state.page = 0; state.items = []; $("#grid").innerHTML = `<div class="center" style="grid-column:1/-1">${tr("loading")}</div>`; }
-    const p = new URLSearchParams({ q: state.q, rooms: state.rooms, price_min: state.min, price_max: state.max, district: state.district, sort: state.sort, page: state.page });
+    const p = new URLSearchParams({ q: state.q, rooms: state.rooms, price_min: state.min, price_max: state.max, district: state.district, period: state.period, sort: state.sort, page: state.page });
     try {
       const r = await api("/api/market/houses?" + p);
       state.items = state.items.concat(r.items); state.page++;
@@ -408,8 +429,9 @@
     return `<div class="item" data-id="${h.id}">
       <div class="img" style="${h.photos[0] ? `background-image:url('${photo(h.photos[0])}')` : ""}">${h.photos[0] ? "" : "🏠"}</div>
       <span class="fav" data-fav="${h.id}">${h.is_favorite ? "❤️" : "🤍"}</span>
+      ${h.rent_period === "day" ? `<span class="st"><span class="badge pending">${tr("period_day")}</span></span>` : ""}
       <div class="b">
-        <div class="price">${priceStr(h)} <small>${tr("per_month")}</small></div>
+        <div class="price">${priceStr(h)} <small>${perStr(h)}</small></div>
         <div class="t">${esc(h.title)}</div>
         <div class="m">${h.rooms ? h.rooms + " " + tr("rooms") + " · " : ""}${h.area ? h.area + " m² · " : ""}${esc(h.district || h.address)}</div>
         <div class="m">${ago(h.published_at)}${h.views ? " · 👁 " + h.views : ""}</div>
@@ -446,7 +468,7 @@
         <div class="favbtn" data-fav="${h.id}">${h.is_favorite ? "❤️" : "🤍"}</div>
         ${h.photos.length > 1 ? `<div class="dots" id="dots">1 / ${h.photos.length}</div>` : ""}</div>
       <div class="d">
-        <div class="price">${priceStr(h)} <small>${tr("per_month")} ${uzsStr(h)}</small></div>
+        <div class="price">${priceStr(h)} <small>${perStr(h)} ${uzsStr(h)}</small></div>
         ${h.status !== "approved" ? `<div style="margin:6px 0"><span class="badge ${h.status}">${tr("st_" + h.status)}</span>${h.reject_reason ? ` <span style="font-size:12px;color:var(--hint)">${tr("reason")}: ${esc(h.reject_reason)}</span>` : ""}</div>` : ""}
         <h2>${esc(h.title)}</h2>
         <div class="meta">📍 ${esc(h.address)} · ${ago(h.published_at)} · 👁 ${h.views}</div>
@@ -470,6 +492,7 @@
       ${me.registered ? `
         <div class="card"><div class="k">${tr("pr_name")}</div><div class="v">${esc(me.full_name)}</div></div>
         <div class="card"><div class="k">${tr("pr_phone")}</div><div class="v">${esc(me.phone || "—")}</div></div>
+        <div class="card"><div class="k">${tr("pr_address")}</div><div class="v">${esc(me.address || "—")}</div></div>
         <div class="card"><div class="k">${tr("pr_role")}</div><div class="v">${me.role === "landlord" ? "🏠 " + tr("landlord") : "🔑 " + tr("tenant")}</div></div>
         <button class="primary" id="edit" style="width:100%;padding:12px">${tr("pr_edit")}</button>`
       : `<div class="card"><div class="k">${tr("pr_name")}</div><div class="v">${esc(me.tg_name || "")}</div><div class="k" style="margin-top:6px">${tr("pr_not_registered")}</div></div>
@@ -488,7 +511,7 @@
         <div class="myad" data-my="${h.id}">
           <div class="th" style="${h.photos[0] ? `background-image:url('${photo(h.photos[0])}')` : ""}">${h.photos[0] ? "" : "🏠"}</div>
           <div class="bd"><div class="t">${esc(h.title)} <span class="badge ${h.status}">${tr("st_" + h.status)}</span></div>
-            <div class="m">${priceStr(h)} ${tr("per_month")} · ${h.rooms || "—"} ${tr("rooms")}</div>
+            <div class="m">${priceStr(h)} ${perStr(h)} · ${h.rooms || "—"} ${tr("rooms")}</div>
             ${h.reject_reason ? `<div class="m">${tr("reason")}: ${esc(h.reject_reason)}</div>` : ""}
             <div style="margin-top:6px"><button class="danger" data-del="${h.id}">${tr("delete")}</button></div></div>
         </div>`).join("") : `<div class="center" style="padding:16px">${tr("my_empty")}</div>`;
