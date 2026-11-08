@@ -68,7 +68,7 @@ def user_menu(lang: str = "uz") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=t(lang, "btn_houses")), KeyboardButton(text=t(lang, "btn_contact"))],
-            [KeyboardButton(text=t(lang, "btn_lang"))],
+            [KeyboardButton(text=t(lang, "btn_olx")), KeyboardButton(text=t(lang, "btn_lang"))],
         ],
         resize_keyboard=True,
     )

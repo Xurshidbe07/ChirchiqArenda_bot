@@ -32,6 +32,11 @@ services:
         value: "4,5"
       - key: USD_RATE
         value: "12500"
+      # /olx scraper proksilari (ip:port:login:parol, vergul bilan) — dashboard'da qo'lda kiritiladi
+      - key: PROXIES
+        sync: false
+      - key: OLX_CACHE_TTL
+        value: "600"
 
 databases:
   - name: chirchiq-arenda-db

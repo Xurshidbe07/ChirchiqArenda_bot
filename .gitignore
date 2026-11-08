@@ -1,5 +1,6 @@
 # Maxfiy ma'lumotlar
 .env
+proxies.txt
 
 # Python
 __pycache__/
