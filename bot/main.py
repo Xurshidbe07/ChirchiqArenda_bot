@@ -28,9 +28,9 @@ logging.basicConfig(
 log = logging.getLogger("chirchiq_arenda")
 
 _CMD_DESC = {
-    "uz": {"start": "Botni ishga tushirish", "olx": "OLX e'lonlari", "lang": "Tilni o'zgartirish"},
-    "ru": {"start": "Запустить бота", "olx": "Объявления OLX", "lang": "Сменить язык"},
-    "en": {"start": "Start the bot", "olx": "OLX listings", "lang": "Change language"},
+    "uz": {"start": "Botni ishga tushirish", "lang": "Tilni o'zgartirish"},
+    "ru": {"start": "Запустить бота", "lang": "Сменить язык"},
+    "en": {"start": "Start the bot", "lang": "Change language"},
 }
 
 
@@ -41,14 +41,12 @@ async def set_commands(bot: Bot, webapp_url: str) -> None:
         try:
             await bot.set_my_commands(
                 [BotCommand(command="start", description=d["start"]),
-                 BotCommand(command="olx", description=d["olx"]),
                  BotCommand(command="lang", description=d["lang"])],
                 language_code=code,
             )
         except Exception as exc:  # noqa: BLE001
             log.warning("Komandalar (%s) o'rnatilmadi: %s", code, exc)
     await bot.set_my_commands([BotCommand(command="start", description=_CMD_DESC["uz"]["start"]),
-                               BotCommand(command="olx", description=_CMD_DESC["uz"]["olx"]),
                                BotCommand(command="lang", description=_CMD_DESC["uz"]["lang"])])
 
     # Hamma uchun chat pastidagi "Menu" tugmasi -> uylar bozori (admin panel bu yerda ko'rinmaydi)
@@ -67,7 +65,6 @@ async def set_commands(bot: Bot, webapp_url: str) -> None:
         BotCommand(command="start", description="Botni ishga tushirish"),
         BotCommand(command="admin", description="Admin panel (Mini App)"),
         BotCommand(command="menu", description="Admin menyu (tugmali)"),
-        BotCommand(command="olx", description="OLX e'lonlari"),
         BotCommand(command="lang", description="Tilni o'zgartirish"),
     ]
     for admin_id in await db.all_admin_ids():

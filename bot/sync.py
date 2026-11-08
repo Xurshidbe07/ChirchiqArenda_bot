@@ -1,11 +1,11 @@
-"""Tashqi manbalarni davriy sinxronlash (fon vazifasi)."""
+"""Tashqi manbalarni davriy sinxronlash (fon vazifasi): Joymee + Uybor."""
 from __future__ import annotations
 
 import asyncio
 import logging
 
 from bot.config import config
-from bot.scrapers import joymee
+from bot.scrapers import joymee, uybor
 
 log = logging.getLogger("sync")
 
@@ -17,10 +17,33 @@ def is_running() -> bool:
     return _lock.locked()
 
 
-async def run_once() -> dict[str, int]:
-    """Barcha manbalarni bir marta sinxronlaydi. Parallel chaqirilsa navbat kutadi."""
+def _sources():
+    out = [("joymee", joymee.sync)]
+    if config.uybor_cities:
+        out.append(("uybor", uybor.sync))
+    return out
+
+
+async def run_once() -> dict:
+    """Barcha manbalarni bir marta sinxronlaydi. Bitta manba yiqilsa, qolganlari baribir ishlaydi.
+
+    Natija: jami added/updated/deactivated/seen + har manba bo'yicha (sources) + xatolar (errors).
+    """
     async with _lock:
-        return await joymee.sync()
+        total = {"added": 0, "updated": 0, "deactivated": 0, "seen": 0}
+        per_source: dict[str, dict] = {}
+        errors: dict[str, str] = {}
+        for name, fn in _sources():
+            try:
+                res = await fn()
+                per_source[name] = res
+                for k in total:
+                    total[k] += res.get(k, 0)
+            except Exception as exc:  # noqa: BLE001 — xato manbaning o'zida loglangan
+                errors[name] = str(exc)[:300]
+        if errors and not per_source:
+            raise RuntimeError("; ".join(f"{k}: {v}" for k, v in errors.items()))
+        return {**total, "sources": per_source, "errors": errors}
 
 
 async def _loop(interval_min: int) -> None:
@@ -28,19 +51,18 @@ async def _loop(interval_min: int) -> None:
     while True:
         try:
             await run_once()
-        except Exception:  # noqa: BLE001 — xato allaqachon loglangan
+        except Exception:  # noqa: BLE001
             pass
         await asyncio.sleep(interval_min * 60)
 
 
 def start_background() -> None:
-    """SYNC_INTERVAL_MIN > 0 bo'lsa fon vazifasini ishga tushiradi."""
     global _task
     if config.sync_interval_min <= 0:
         log.info("Avtomatik sinxronlash o'chiq (SYNC_INTERVAL_MIN=0).")
         return
     _task = asyncio.create_task(_loop(config.sync_interval_min), name="market-sync")
-    log.info("Sinxronlash har %s daqiqada.", config.sync_interval_min)
+    log.info("Sinxronlash har %s daqiqada: %s.", config.sync_interval_min, ", ".join(n for n, _ in _sources()))
 
 
 async def stop_background() -> None:

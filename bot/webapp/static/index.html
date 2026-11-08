@@ -249,7 +249,7 @@
   function matches(h) {
     switch (houseFilter) {
       case "pending": return h.status === "pending"; case "active": return h.is_active && h.status === "approved"; case "hidden": return !h.is_active;
-      case "clients": return h.is_client_ad; case "joymee": return h.source === "joymee"; case "manual": return h.source === "admin" && !h.is_client_ad; default: return true;
+      case "clients": return h.is_client_ad; case "joymee": return h.source !== "admin"; case "manual": return h.source === "admin" && !h.is_client_ad; default: return true;
     }
   }
   function renderHouses() {
@@ -358,6 +358,7 @@
         [tr("s_total"), s.houses_total], [tr("s_active"), s.houses_active], [tr("s_pending"), s.houses_pending], [tr("s_clients"), s.houses_clients],
         [tr("s_auto"), s.houses_joymee], [tr("s_manual"), s.houses_admin], [tr("s_admins"), s.admins_total + " + " + (me && me.is_superadmin ? "★" : "")],
       ].map(([l, n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")
+      + (s.last_sync_uybor ? `<div class="stat" style="grid-column:1/-1"><div class="l">${tr("s_last")} · uybor</div><div style="font-size:13px;margin-top:4px">${new Date(s.last_sync_uybor.finished_at || s.last_sync_uybor.started_at).toLocaleString()} — ${tr("s_seen")} ${s.last_sync_uybor.seen}, ${tr("s_new")} ${s.last_sync_uybor.added}${s.last_sync_uybor.error ? ` <span style="color:var(--danger)">${esc(s.last_sync_uybor.error)}</span>` : ""}</div></div>` : "")
       + `<div class="stat" style="grid-column:1/-1"><div class="l">${tr("s_last")}</div><div style="font-size:13px;margin-top:4px">${ls ? `${new Date(ls.finished_at || ls.started_at).toLocaleString()} — ${tr("s_seen")} ${ls.seen}, ${tr("s_new")} ${ls.added}, ${tr("s_upd")} ${ls.updated}, ${tr("s_closed")} ${ls.deactivated}${ls.error ? `<br><span style="color:var(--danger)">${tr("s_error")}: ${esc(ls.error)}</span>` : ""}` : tr("sync_never")}<br>${s.sync_interval_min ? tr("s_auto_every", { n: s.sync_interval_min }) : tr("s_auto_off")}</div></div>`;
     } catch (e) { $("#stats-grid").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   }

@@ -381,7 +381,8 @@ async def stats() -> dict[str, Any]:
             (SELECT COUNT(*) FROM houses h WHERE %s)                     AS houses_active,
             (SELECT COUNT(*) FROM houses WHERE source = 'admin' AND owner_id IS NULL) AS houses_admin,
             (SELECT COUNT(*) FROM houses WHERE owner_id IS NOT NULL)     AS houses_clients,
-            (SELECT COUNT(*) FROM houses WHERE source = 'joymee')        AS houses_joymee,
+            (SELECT COUNT(*) FROM houses WHERE source <> 'admin')        AS houses_joymee,
+            (SELECT COUNT(*) FROM houses WHERE source = 'uybor')         AS houses_uybor,
             (SELECT COUNT(*) FROM houses WHERE status = 'pending')       AS houses_pending,
             (SELECT COUNT(*) FROM favorites)                             AS favorites_total,
             (SELECT COUNT(*) FROM admins)                                AS admins_total
@@ -389,6 +390,7 @@ async def stats() -> dict[str, Any]:
     )
     out = dict(row)
     out["last_sync"] = await last_sync()
+    out["last_sync_uybor"] = await last_sync("uybor")
     return out
 
 

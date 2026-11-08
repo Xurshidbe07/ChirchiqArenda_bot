@@ -149,6 +149,8 @@ def _house_json(h, *, public: bool = False) -> dict[str, Any]:
         "description": h["description"],
         "photos": photos,
         "contact_phone": h["contact_phone"],
+        # Telefon yo'q tashqi e'lon (masalan uybor): klient e'lon sahifasida bog'lanadi
+        "contact_url": h["source_url"] if not h["contact_phone"] and h["source"] != "admin" else None,
         "seller_name": h["seller_name"] or h["owner_name"],
         "seller_username": h["seller_username"] or h["owner_username"],
         "source": h["source"],
@@ -543,7 +545,6 @@ async def m_me(request: web.Request) -> web.Response:
         "is_admin": request["is_admin"],
         "usd_rate": config.usd_rate,
         "moderation": config.moderation,
-        "olx_url": config.olx_url,
     })
 
 

@@ -71,17 +71,11 @@ orqali (`api.joymee.uz/api/v1/announcement/?deal_type=2&district=166`), robots.t
 - `JOYMEE_DISTRICTS` — tumanlar (166 Chirchiq shahar; 150/156/147 — Yuqori/O'rta/Quyichirchiq),
   `JOYMEE_CATEGORIES` — turkumlar (4 Kvartira, 5 Uy/dacha, 6 Tijorat, 7 Yer), `USD_RATE` — y.e kursi.
 
-> **OLX haqida.** OLX.uz barcha dastur so'rovlarini (hatto `robots.txt` ni ham) CloudFront bot-himoyasi
-> bilan bloklaydi, faqat brauzerdan ochiladi. Bot-himoyani aylanib o'tish qilinmaydi, shuning uchun OLX
-> e'lonlari bozorga avtomatik tortilmaydi. Variantlar: OLX'ning rasmiy hamkorlik API'si yoki admin panel orqali qo'lda qo'shish.
-
-### OLX: «🛒 OLXda» tugmasi va /olx
-- **🛒 OLXda** tugmasi (`/start`, til tanlash, «🏠 Uylar») bosilganda `OLX_URL` sahifasi — Chirchiq ijara e'lonlari — OLX'da ochiladi.
-- **📢 OLX e'lonlari** menyu tugmasi yoki `/olx` — `bot/scrapers/olx.py` OLX'ning ochiq API'sidan so'nggi 5 ta e'lonni
-  so'raydi. So'rovlar `PROXIES` dagi proksilar orasida navbat bilan taqsimlanadi, natija `OLX_CACHE_TTL` soniya keshda.
-  OLX 403/429 qaytarsa, aylanib o'tishga urinilmaydi — bot «OLXda» tugmasini beradi.
-- Proksilar: `PROXIES` (vergul bilan `ip:port:login:parol`), yoki `PROXIES_FILE`, yoki Render Secret File
-  `/etc/secrets/proxies.txt`. Proksi parollari repo'ga qo'shilmaydi.
+### Ikkinchi manba: Uybor scraper
+`bot/scrapers/uybor.py` — **uybor.uz** ochiq API'si (`api.uybor.uz/api/v1/listings?operationType__eq=rent&city__eq=150`),
+robots.txt faqat `/admin/`, `/cgi-bin/`, `/tmp/` ni yopadi. Joymee bilan bir sinxronlashda ishlaydi (bir manba
+yiqilsa ikkinchisi to'xtamaydi). `UYBOR_CITIES` (150 = Chirchiq, bo'sh = o'chiq), `UYBOR_CATEGORIES`.
+Uybor telefonni ochiq bermaydi — bunday e'lonlarda market'da «💬 Bog'lanish ↗» tugmasi e'lon sahifasini ochadi.
 
 ### Matnli zaxira
 Mini App ishlamasa (`WEBAPP_URL` yo'q), «🏠 Uylar» tugmasi e'lonlarni chatda varaqlab beradi.
@@ -179,7 +173,8 @@ ChirchiqArendabot/
 │   ├── sync.py          # davriy sinxronlash (fon vazifasi)
 │   ├── keepalive.py     # bepul hostingda uxlamaslik uchun o'ziga ping
 │   ├── scrapers/
-│   │   └── joymee.py    # Joymee.uz API dan e'lonlarni tortish
+│   │   ├── joymee.py    # Joymee.uz API dan e'lonlarni tortish
+│   │   └── uybor.py     # Uybor.uz API dan e'lonlarni tortish
 │   ├── webapp/
 │   │   ├── server.py    # Mini App API (aiohttp): admin + market
 │   │   └── static/

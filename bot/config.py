@@ -29,8 +29,9 @@ class Config:
     # Admin panel JWT: maxfiy kalit (bo'sh = bot tokenidan hosil qilinadi) va amal qilish muddati
     admin_jwt_secret: str = ""
     admin_token_hours: int = 12
-    # OLX'ga o'tish havolasi (Chirchiq, uzoq muddatli ijara); bo'sh = tugma ko'rsatilmaydi
-    olx_url: str = "https://www.olx.uz/nedvizhimost/kvartiry/arenda-dolgosrochnaya/chirchik/"
+    # Uybor (uybor.uz): bo'sh UYBOR_CITIES = o'chiq
+    uybor_cities: tuple[int, ...] = (150,)                  # 150 = Chirchiq
+    uybor_categories: tuple[int, ...] = (7, 8, 9, 26, 27, 28)  # kvartira, uy, kottej, xona, dacha, xususiy uy
 
 
 def _parse_admin_ids(raw: str) -> frozenset[int]:
@@ -72,7 +73,9 @@ def load_config() -> Config:
         moderation=os.getenv("MODERATION", "0").strip().lower() in ("1", "true", "yes", "on"),
         admin_jwt_secret=os.getenv("ADMIN_JWT_SECRET", "").strip(),
         admin_token_hours=int(os.getenv("ADMIN_TOKEN_HOURS", "12") or 12),
-        olx_url=os.getenv("OLX_URL", "https://www.olx.uz/nedvizhimost/kvartiry/arenda-dolgosrochnaya/chirchik/").strip(),
+        uybor_cities=(() if os.getenv("UYBOR_CITIES", None) == ""
+                      else _parse_int_list(os.getenv("UYBOR_CITIES", ""), (150,))),
+        uybor_categories=_parse_int_list(os.getenv("UYBOR_CATEGORIES", ""), (7, 8, 9, 26, 27, 28)),
         sync_interval_min=int(os.getenv("SYNC_INTERVAL_MIN", "30") or 0),
         joymee_districts=_parse_int_list(os.getenv("JOYMEE_DISTRICTS", ""), (166,)),
         joymee_categories=_parse_int_list(os.getenv("JOYMEE_CATEGORIES", ""), (4, 5)),

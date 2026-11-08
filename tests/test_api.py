@@ -247,6 +247,33 @@ def test_superadmin_manages_admins_and_moderation():
 
 # ------------------------------------------------------------ scraper mapping ---
 
+def test_uybor_listing_mapping():
+    from decimal import Decimal
+
+    from bot.scrapers.uybor import map_listing
+
+    a = {
+        "id": 1324326, "categoryId": 8, "price": 200, "priceCurrency": "usd", "pricePeriodUnit": "day",
+        "room": "4", "square": 250, "floor": None, "floorTotal": 2, "address": "Троицкий мост",
+        "cityId": 150, "city": {"id": 150, "name": {"uz": "Chirchiq", "ru": "Чирчик"}},
+        "subCategory": {"name": {"uz": "Dacha", "ru": "Дача"}},
+        "description": "Новая дача в Чирчике с бассейном и сауной\nВторая строка",
+        "lat": 41.43, "lng": 69.54, "upAt": "2026-11-07T12:53:20.129Z", "views": 36,
+        "media": [{"url": "https://api.uybor.uz/api/v1/media/n/1.jpg"}, {"url": "https://api.uybor.uz/api/v1/media/n/2.jpg"}],
+        "user": {"displayName": "Evgeniya O."},
+    }
+    m = map_listing(a)
+    assert m["rent_period"] == "day" and m["currency"] == "USD" and m["price"] == Decimal("200")
+    assert m["rooms"] == 4 and m["area"] == Decimal("250") and m["floor"] is None and m["floors"] == 2
+    assert m["district"] == "Chirchiq shahar" and m["address"] == "Chirchiq, Троицкий мост"
+    assert m["title"] == "Новая дача в Чирчике с бассейном и сауной"
+    assert m["photo_urls"][0].endswith("/1.jpg") and m["seller_name"] == "Evgeniya O."
+    assert m["contact_phone"] is None and m["source_url"] == "https://uybor.uz/listings/1324326"
+    assert m["external_created_at"] is not None and m["views"] == 36
+    # qisqa tavsif -> sarlavha turkum va xonadan yasaladi; oylik narx
+    m2 = map_listing({**a, "description": "Ijara", "pricePeriodUnit": "month", "priceCurrency": "uzs"})
+    assert m2["title"].startswith("Dacha, 4 xona") and m2["rent_period"] == "month" and m2["currency"] == "UZS"
+
 def test_joymee_detail_mapping():
     from decimal import Decimal
 
