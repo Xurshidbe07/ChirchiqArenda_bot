@@ -543,6 +543,7 @@ async def m_me(request: web.Request) -> web.Response:
         "is_admin": request["is_admin"],
         "usd_rate": config.usd_rate,
         "moderation": config.moderation,
+        "olx_url": config.olx_url,
     })
 
 

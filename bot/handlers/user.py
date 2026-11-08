@@ -22,17 +22,20 @@ from aiogram.types import (
 
 from bot import db
 from bot import keyboards as kb
+from bot.config import config
 from bot.i18n import LANGS, all_variants, t
 
 router = Router(name="user")
 
 
 def market_kb(lang: str, webapp_url: str) -> InlineKeyboardMarkup | None:
-    if not webapp_url:
-        return None
-    return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text=t(lang, "market_btn"), web_app=WebAppInfo(url=webapp_url + "/market")),
-    ]])
+    """Market Mini App tugmasi + (sozlangan bo'lsa) OLX'ga o'tish tugmasi."""
+    rows: list[list[InlineKeyboardButton]] = []
+    if webapp_url:
+        rows.append([InlineKeyboardButton(text=t(lang, "market_btn"), web_app=WebAppInfo(url=webapp_url + "/market"))])
+    if config.olx_url:
+        rows.append([InlineKeyboardButton(text=t(lang, "olx_btn"), url=config.olx_url)])
+    return InlineKeyboardMarkup(inline_keyboard=rows) if rows else None
 
 
 async def send_welcome(message: Message, lang: str, webapp_url: str) -> None:

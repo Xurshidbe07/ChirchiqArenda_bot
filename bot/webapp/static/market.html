@@ -178,6 +178,11 @@
 </header>
 <main>
   <section id="page-feed">
+    <div id="olx-banner" class="hidden" style="display:flex;align-items:center;gap:10px;background:var(--card);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;cursor:pointer">
+      <div style="width:40px;height:40px;border-radius:10px;background:#23e5db;color:#002f34;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px">OLX</div>
+      <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px" data-i="olx_title"></div><div style="color:var(--hint);font-size:12px" data-i="olx_sub"></div></div>
+      <div style="color:var(--link);font-size:18px">↗</div>
+    </div>
     <div class="count"><span id="cnt"></span>
       <select id="sort"><option value="new" data-i="s_new"></option><option value="cheap" data-i="s_cheap"></option><option value="expensive" data-i="s_expensive"></option><option value="popular" data-i="s_popular"></option></select></div>
     <div class="grid" id="grid"></div>
@@ -225,7 +230,7 @@
       n_houses: "Uylar", n_favs: "Sevimlilar", n_post: "E'lon berish", n_profile: "Profil",
       per_month: "/ oy", per_day: "/ kun", period_month: "Oylik", period_day: "Kunlik", f_period: "Ijara turi", p_period: "Ijara turi",
       first_name: "Ism", last_name: "Familiya", address: "Yashash manzili", address_ph: "Chirchiq, Yoshlik mavzesi 12-uy", err_lastname: "Familiyangizni kiriting.", err_address: "Yashash manzilingizni kiriting.", tg_note: "Telegram ID va username avtomatik saqlanadi",
-      pr_address: "Manzil", rooms: "xona", now: "hozirgina", hours: "{n} soat oldin", yesterday: "kecha", days: "{n} kun oldin",
+      pr_address: "Manzil", olx_title: "OLX'dagi Chirchiq e'lonlari", olx_sub: "Yana ko'proq variantlar — OLX saytida ochiladi", rooms: "xona", now: "hozirgina", hours: "{n} soat oldin", yesterday: "kecha", days: "{n} kun oldin",
       d_rooms: "Xonalar", d_area: "Maydon", d_floor: "Qavat", d_district: "Mavze", no_desc: "Tavsif yo'q.", owner: "Uy egasi / rieltor",
       call: "📞 Qo'ng'iroq qilish", no_phone: "Telefon ko'rsatilmagan", close: "Yopish",
       st_pending: "moderatsiyada", st_approved: "tasdiqlangan", st_rejected: "rad etilgan", reason: "Sabab",
@@ -249,7 +254,7 @@
       n_houses: "Жильё", n_favs: "Избранное", n_post: "Подать", n_profile: "Профиль",
       per_month: "/ мес", per_day: "/ сутки", period_month: "Помесячно", period_day: "Посуточно", f_period: "Тип аренды", p_period: "Тип аренды",
       first_name: "Имя", last_name: "Фамилия", address: "Адрес проживания", address_ph: "Чирчик, массив Ёшлик, дом 12", err_lastname: "Введите фамилию.", err_address: "Введите адрес проживания.", tg_note: "Telegram ID и username сохраняются автоматически",
-      pr_address: "Адрес", rooms: "комн.", now: "только что", hours: "{n} ч. назад", yesterday: "вчера", days: "{n} дн. назад",
+      pr_address: "Адрес", olx_title: "Объявления Чирчика на OLX", olx_sub: "Ещё больше вариантов — откроется сайт OLX", rooms: "комн.", now: "только что", hours: "{n} ч. назад", yesterday: "вчера", days: "{n} дн. назад",
       d_rooms: "Комнаты", d_area: "Площадь", d_floor: "Этаж", d_district: "Район", no_desc: "Описания нет.", owner: "Владелец / риелтор",
       call: "📞 Позвонить", no_phone: "Телефон не указан", close: "Закрыть",
       st_pending: "на модерации", st_approved: "одобрено", st_rejected: "отклонено", reason: "Причина",
@@ -273,7 +278,7 @@
       n_houses: "Housing", n_favs: "Favorites", n_post: "Post", n_profile: "Profile",
       per_month: "/ month", per_day: "/ day", period_month: "Monthly", period_day: "Daily", f_period: "Rental type", p_period: "Rental type",
       first_name: "First name", last_name: "Last name", address: "Home address", address_ph: "Chirchiq, Yoshlik district, house 12", err_lastname: "Enter your last name.", err_address: "Enter your home address.", tg_note: "Telegram ID and username are saved automatically",
-      pr_address: "Address", rooms: "rooms", now: "just now", hours: "{n} h ago", yesterday: "yesterday", days: "{n} d ago",
+      pr_address: "Address", olx_title: "Chirchiq listings on OLX", olx_sub: "More options — opens the OLX website", rooms: "rooms", now: "just now", hours: "{n} h ago", yesterday: "yesterday", days: "{n} d ago",
       d_rooms: "Rooms", d_area: "Area", d_floor: "Floor", d_district: "District", no_desc: "No description.", owner: "Owner / agent",
       call: "📞 Call", no_phone: "No phone provided", close: "Close",
       st_pending: "under review", st_approved: "approved", st_rejected: "rejected", reason: "Reason",
@@ -336,8 +341,10 @@
     ["reg", "post", "app"].forEach((id) => $("#" + id).classList.toggle("hidden", id !== page));
     window.scrollTo(0, 0);
   }
+  $("#olx-banner").addEventListener("click", () => { if (!me || !me.olx_url) return; if (inTelegram && tg.openLink) tg.openLink(me.olx_url); else window.open(me.olx_url, "_blank"); });
   function showApp(tab) {
     show("app"); $("#who").textContent = me.registered ? me.full_name : "";
+    $("#olx-banner").classList.toggle("hidden", !me.olx_url);
     if (tab) selectTab(tab);
   }
   function selectTab(p) {
