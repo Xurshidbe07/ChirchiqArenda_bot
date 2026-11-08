@@ -1,4 +1,5 @@
 import asyncio
+import html
 import logging
 import os
 import re
@@ -10,18 +11,21 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import (
-    CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
+    BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
     Message, ReplyKeyboardMarkup, ReplyKeyboardRemove,
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from dotenv import load_dotenv
 
 import db
-from texts import REGIONS, region_name, t
+from olx import OLXBlocked, OLXScraper, olx_url
+from texts import REGIONS, T, region_name, t
 
 load_dotenv()
 router = Router()
 TOTAL = 5
+scraper: OLXScraper | None = None
+log = logging.getLogger(__name__)
 
 
 class Reg(StatesGroup):
@@ -75,6 +79,25 @@ def phone_kb(lang: str) -> ReplyKeyboardMarkup:
     )
 
 
+def olx_kb(lang: str) -> InlineKeyboardMarkup:
+    """Bosilganda to'g'ridan-to'g'ri OLX sahifasini ochadigan tugma."""
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text=t(lang, "olx_btn"), url=olx_url(lang)),
+    ]])
+
+
+def main_menu(lang: str) -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=t(lang, "menu_olx"))]],
+        resize_keyboard=True,
+    )
+
+
+async def user_lang(telegram_id: int) -> str:
+    u = await db.get_user(telegram_id)
+    return u["lang"] if u else "uz"
+
+
 def confirm_kb(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text=t(lang, "ok_btn"), callback_data="ok"),
@@ -93,7 +116,10 @@ async def start(message: Message, state: FSMContext):
     user = await db.get_user(message.from_user.id)
     if user:
         await state.clear()
-        await message.answer(t(user["lang"], "again", n=user["full_name"]))
+        lang = user["lang"]
+        await message.answer(t(lang, "again", n=user["full_name"]),
+                             reply_markup=main_menu(lang))
+        await message.answer(t(lang, "olx_promo"), reply_markup=olx_kb(lang))
         return
     await ask_language(message, state)
 
@@ -236,14 +262,47 @@ async def confirm(cb: CallbackQuery, state: FSMContext):
     d = await state.get_data()
     await db.save_user(cb.from_user.id, cb.from_user.username, d)
     await state.clear()
-    await cb.message.edit_text(t(d["lang"], "done"))
-    await cb.answer(t(d["lang"], "saved"))
+    lang = d["lang"]
+    await cb.message.edit_text(t(lang, "done"))
+    await cb.message.answer(t(lang, "olx_promo"), reply_markup=olx_kb(lang))
+    await cb.message.answer(t(lang, "menu_olx") + " 👇", reply_markup=main_menu(lang))
+    await cb.answer(t(lang, "saved"))
 
 
 @router.callback_query(Reg.confirm, F.data == "redo")
 async def redo(cb: CallbackQuery, state: FSMContext):
     await cb.answer()
     await ask_language(cb.message, state)
+
+
+@router.message(Command("olx"))
+@router.message(F.text.in_({T["uz"]["menu_olx"], T["ru"]["menu_olx"]}))
+async def olx_offers(message: Message):
+    lang = await user_lang(message.from_user.id)
+    wait = await message.answer(t(lang, "olx_loading"))
+    try:
+        offers = await scraper.latest(5)
+    except OLXBlocked as e:
+        log.warning("OLX so'rovni rad etdi: %s", e)
+        offers = []
+    except Exception:
+        log.exception("OLX'dan e'lon olishda xato")
+        offers = []
+
+    if not offers:
+        await wait.edit_text(t(lang, "olx_fail"), reply_markup=olx_kb(lang))
+        return
+
+    blocks = [t(lang, "olx_head")]
+    for i, o in enumerate(offers, 1):
+        place = f"\n📍 {html.escape(o.location)}" if o.location else ""
+        blocks.append(
+            f'{i}. <a href="{html.escape(o.url)}">{html.escape(o.title)}</a>\n'
+            f"💰 {html.escape(o.price)}{place}"
+        )
+    blocks.append(t(lang, "olx_more"))
+    await wait.edit_text("\n\n".join(blocks), reply_markup=olx_kb(lang),
+                         disable_web_page_preview=True)
 
 
 @router.message(Reg.lang)
@@ -256,12 +315,21 @@ async def use_buttons(message: Message, state: FSMContext):
 
 
 async def main():
+    global scraper
     logging.basicConfig(level=logging.INFO)
+    scraper = OLXScraper()
+    log.info("OLX scraper: %d ta proksi yuklandi", len(scraper.proxies))
     await db.init_db(os.environ["DATABASE_URL"])
     bot = Bot(os.environ["BOT_TOKEN"],
               default=DefaultBotProperties(parse_mode="HTML"))
     dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(router)
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Boshlash / Начать"),
+        BotCommand(command="olx", description="OLX e'lonlari / Объявления OLX"),
+        BotCommand(command="profile", description="Profil / Профиль"),
+        BotCommand(command="til", description="Til / Язык"),
+    ])
     await dp.start_polling(bot)
 
 

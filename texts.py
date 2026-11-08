@@ -36,12 +36,22 @@ T = {
                  "Endi sizga ijara olamining barcha imkoniyatlari ochiq.\nProfilingiz: /profile"),
         "saved": "Saqlandi ✅",
         "again": ("😊 Qaytganingiz bilan, <b>{n}</b>!\nSiz allaqachon ro'yxatdan o'tgansiz.\n\n"
-                  "Ma'lumotlarni yangilash: /register\nProfil: /profile\nTilni o'zgartirish: /til"),
+                  "Ma'lumotlarni yangilash: /register\nProfil: /profile\nTilni o'zgartirish: /til\n"
+                  "OLX e'lonlari: /olx"),
         "no_reg": "Avval ro'yxatdan o'ting: /start",
         "profile": ("👤 <b>Sizning profilingiz</b>\n\nIsm: {name}\nTelefon: {phone}\n"
                     "Maqsad: {role}\nHudud: {region}, {district}\nRo'yxatdan o'tgan: {date}"),
         "use_buttons": "👆 Iltimos, yuqoridagi tugmalardan birini tanlang.",
         "lang_changed": "✅ Til o'zgartirildi: O'zbekcha",
+        "olx_btn": "🛒 OLXda",
+        "menu_olx": "📢 OLX e'lonlari",
+        "olx_promo": ("🛒 <b>Chirchiqdagi yuzlab ijara e'lonlari OLXda!</b>\n"
+                      "Pastdagi tugmani bosing va o'zingizga mos uyni toping 👇"),
+        "olx_loading": "⏳ OLX'dan so'nggi e'lonlarni olyapman...",
+        "olx_head": "🏠 <b>Chirchiqdagi so'nggi ijara e'lonlari (OLX)</b>",
+        "olx_more": "Barcha e'lonlarni OLXda ko'ring 👇",
+        "olx_fail": ("😔 Hozircha OLX'dan e'lonlarni olib bo'lmadi.\n"
+                     "Barcha e'lonlarni to'g'ridan-to'g'ri OLXda ko'ring 👇"),
     },
     "ru": {
         "pick_lang": "🌐 Tilni tanlang / Выберите язык",
@@ -69,12 +79,22 @@ T = {
                  "Теперь вам доступны все возможности аренды.\nВаш профиль: /profile"),
         "saved": "Сохранено ✅",
         "again": ("😊 С возвращением, <b>{n}</b>!\nВы уже зарегистрированы.\n\n"
-                  "Обновить данные: /register\nПрофиль: /profile\nСменить язык: /til"),
+                  "Обновить данные: /register\nПрофиль: /profile\nСменить язык: /til\n"
+                  "Объявления OLX: /olx"),
         "no_reg": "Сначала зарегистрируйтесь: /start",
         "profile": ("👤 <b>Ваш профиль</b>\n\nИмя: {name}\nТелефон: {phone}\n"
                     "Цель: {role}\nРегион: {region}, {district}\nДата регистрации: {date}"),
         "use_buttons": "👆 Пожалуйста, выберите один из вариантов кнопками выше.",
         "lang_changed": "✅ Язык изменён: Русский",
+        "olx_btn": "🛒 OLXda",
+        "menu_olx": "📢 Объявления OLX",
+        "olx_promo": ("🛒 <b>Сотни объявлений об аренде в Чирчике на OLX!</b>\n"
+                      "Нажмите кнопку ниже и найдите подходящее жильё 👇"),
+        "olx_loading": "⏳ Загружаю свежие объявления с OLX...",
+        "olx_head": "🏠 <b>Свежие объявления об аренде в Чирчике (OLX)</b>",
+        "olx_more": "Все объявления смотрите на OLX 👇",
+        "olx_fail": ("😔 Сейчас не удалось загрузить объявления с OLX.\n"
+                     "Смотрите все объявления прямо на OLX 👇"),
     },
 }
 
