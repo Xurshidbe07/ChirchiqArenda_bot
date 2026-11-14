@@ -174,15 +174,20 @@ async def sync() -> dict[str, int]:
             for qid in skip:
                 seen.pop(qid, None)
             fresh = [qid for qid in seen if qid not in existing]
+            failures: dict[str, int] = {}
             for qid in fresh[: config.qayoda_max_new]:
                 path, period = seen[qid]
                 try:
                     html = await _get(session, path)
-                except QayodaError as exc:
+                except (QayodaError, aiohttp.ClientError, asyncio.TimeoutError) as exc:
                     log.warning("Tafsilot olinmadi %s: %s", qid, exc)
+                    key = str(exc).split("->")[-1].strip()[:40] or type(exc).__name__
+                    failures[key] = failures.get(key, 0) + 1
                     continue
                 data = parse_detail(html, path, period)
                 if data is None:
+                    hint = "challenge" if ("cf-chl" in html or "Just a moment" in html) else f"no-ld({len(html)}b)"
+                    failures[hint] = failures.get(hint, 0) + 1
                     continue
                 origin = data.pop("origin_site")
                 if origin in ("joymee.uz", "uybor.uz"):
@@ -196,8 +201,14 @@ async def sync() -> dict[str, int]:
 
         seen_ids = list(seen.keys())
         await db.touch_seen(SOURCE, seen_ids)
-        deactivated = await db.deactivate_missing(SOURCE, seen_ids)
-        await db.sync_finished(log_id, added=added, updated=0, deactivated=deactivated, seen=len(seen_ids))
+        # Hech narsa yuklanmagan bo'lsa yopmaymiz — vaqtinchalik xato bazani bo'shatib yubormasin
+        if fresh and not added and failures:
+            deactivated = 0
+        else:
+            deactivated = await db.deactivate_missing(SOURCE, seen_ids)
+        note = ("tafsilot xatolari: " + ", ".join(f"{k}×{v}" for k, v in failures.items())) if failures else None
+        await db.sync_finished(log_id, added=added, updated=0, deactivated=deactivated, seen=len(seen_ids),
+                               error=note)
         log.info("Qayoda sinx: ko'rildi %s, yangi %s, takror (joymee/uybor) %s, yopildi %s",
                  len(seen_ids), added, skipped, deactivated)
     except Exception as exc:  # noqa: BLE001

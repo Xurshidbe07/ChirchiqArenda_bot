@@ -15,3 +15,6 @@ venv/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Baza ko'chirish uchun maxfiy ulanish manzillari
+.env.migrate
