@@ -105,6 +105,15 @@ CREATE TABLE IF NOT EXISTS admins (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Agregatordan kelgan, lekin boshqa manbada allaqachon bor e'lonlar (qayta yuklamaslik uchun)
+CREATE TABLE IF NOT EXISTS scrape_skip (
+    source     TEXT NOT NULL,
+    source_id  TEXT NOT NULL,
+    reason     TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (source, source_id)
+);
+
 -- Sinxronlash jurnali
 CREATE TABLE IF NOT EXISTS sync_log (
     id          SERIAL PRIMARY KEY,

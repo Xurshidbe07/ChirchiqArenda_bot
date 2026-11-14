@@ -247,6 +247,38 @@ def test_superadmin_manages_admins_and_moderation():
 
 # ------------------------------------------------------------ scraper mapping ---
 
+def test_qayoda_parsers():
+    from decimal import Decimal
+
+    from bot.scrapers.qayoda import parse_detail, parse_list_page
+
+    list_html = (
+        '<a href="/ru/obyavlenie/ijaraga-beriladi-2-xonali-kvartira-75-m-3-4-qavat-chirchiq-shahri-4981571">a</a>'
+        '<a href="/ru/obyavlenie/ijaraga-beriladi-tijorat-binosi-22-m-chirchiq-shahri-4986527">b</a>'
+        '<a href="/ru/obyavlenie/kunlik-ijaraga-4-xonali-dala-hovli-chirchiq-shahri-3959112">c</a>'
+    )
+    found = parse_list_page(list_html)
+    assert set(found) == {"4981571", "3959112"}  # tijorat binosi tashlandi
+
+    ld = ('{"@context":"https://schema.org","@type":"RealEstateListing",'
+          '"name":"Сдаётся 2-комнатная квартира, 75 м², 3/4 этаж — Чирчик","datePosted":"2026-11-13T13:39:00.000Z",'
+          '"image":["https://qayoda.uz/img/p/a/1280.webp","https://qayoda.uz/img/p/b/1280.webp"],'
+          '"description":"Talabalar uchun","offers":{"@type":"Offer","price":58.46,"priceCurrency":"USD"},'
+          '"about":{"@type":"Place","address":{"addressLocality":"Чирчик","streetAddress":"Троицкий"}}}')
+    html = (f'<script type="application/ld+json">{ld}</script>'
+            '<a href="https://www.olx.uz/d/obyavlenie/kvartira-ID4rwlL.html">Оригинал</a>')
+    d = parse_detail(html, "/ru/obyavlenie/x-4981571", "month")
+    assert d["title"] == "Сдаётся 2-комнатная квартира, 75 м², 3/4 этаж"
+    assert d["rooms"] == 2 and d["area"] == Decimal("75") and d["floor"] == 3 and d["floors"] == 4
+    assert d["price"] == Decimal("58.46") and d["currency"] == "USD" and d["rent_period"] == "month"
+    assert d["address"] == "Chirchiq, Троицкий" and len(d["photo_urls"]) == 2
+    assert d["source_url"].startswith("https://www.olx.uz/") and d["origin_site"] == "olx.uz"
+    # asl manba topilmasa — qayoda sahifasining o'zi
+    d2 = parse_detail(f'<script type="application/ld+json">{ld}</script>', "/ru/obyavlenie/x-1", "day")
+    assert d2["source_url"] == "https://qayoda.uz/ru/obyavlenie/x-1" and d2["rent_period"] == "day"
+    assert parse_detail("<html></html>", "/x", "month") is None
+
+
 def test_uybor_listing_mapping():
     from decimal import Decimal
 

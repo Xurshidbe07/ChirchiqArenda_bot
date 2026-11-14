@@ -5,12 +5,13 @@ import asyncio
 import logging
 
 from bot.config import config
-from bot.scrapers import joymee, uybor
+from bot.scrapers import joymee, qayoda, uybor
 
 log = logging.getLogger("sync")
 
 _lock = asyncio.Lock()
 _task: asyncio.Task | None = None
+_qayoda_task: asyncio.Task | None = None
 
 
 def is_running() -> bool:
@@ -56,19 +57,34 @@ async def _loop(interval_min: int) -> None:
         await asyncio.sleep(interval_min * 60)
 
 
+async def _qayoda_loop(interval_min: int) -> None:
+    """Qayoda sekin (Crawl-delay 10s) — admin «Yangilash» tugmasini kutdirmaslik uchun alohida."""
+    await asyncio.sleep(90)  # tezkor manbalar avval ishlasin
+    while True:
+        try:
+            await qayoda.sync()
+        except Exception:  # noqa: BLE001 — xato loglangan
+            pass
+        await asyncio.sleep(interval_min * 60)
+
+
 def start_background() -> None:
-    global _task
+    global _task, _qayoda_task
     if config.sync_interval_min <= 0:
         log.info("Avtomatik sinxronlash o'chiq (SYNC_INTERVAL_MIN=0).")
         return
     _task = asyncio.create_task(_loop(config.sync_interval_min), name="market-sync")
     log.info("Sinxronlash har %s daqiqada: %s.", config.sync_interval_min, ", ".join(n for n, _ in _sources()))
+    if config.qayoda_cities and config.qayoda_interval_min > 0:
+        _qayoda_task = asyncio.create_task(_qayoda_loop(config.qayoda_interval_min), name="qayoda-sync")
+        log.info("Qayoda sinxronlash har %s daqiqada (Crawl-delay 10s).", config.qayoda_interval_min)
 
 
 async def stop_background() -> None:
-    if _task is not None and not _task.done():
-        _task.cancel()
-        try:
-            await _task
-        except (asyncio.CancelledError, Exception):  # noqa: BLE001
-            pass
+    for t in (_task, _qayoda_task):
+        if t is not None and not t.done():
+            t.cancel()
+            try:
+                await t
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass

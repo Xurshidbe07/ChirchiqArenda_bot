@@ -32,6 +32,10 @@ class Config:
     # Uybor (uybor.uz): bo'sh UYBOR_CITIES = o'chiq
     uybor_cities: tuple[int, ...] = (150,)                  # 150 = Chirchiq
     uybor_categories: tuple[int, ...] = (7, 8, 9, 26, 27, 28)  # kvartira, uy, kottej, xona, dacha, xususiy uy
+    # Qayoda (qayoda.uz, agregator): katalog yo'llari; bo'sh = o'chiq. Sekin (Crawl-delay 10s) — alohida jadval
+    qayoda_cities: tuple[str, ...] = ("toshkent-viloyati/chirchiq",)
+    qayoda_interval_min: int = 60
+    qayoda_max_new: int = 40                      # bir sinxronda ko'pi bilan nechta yangi e'lon tafsiloti
 
 
 def _parse_admin_ids(raw: str) -> frozenset[int]:
@@ -76,6 +80,9 @@ def load_config() -> Config:
         uybor_cities=(() if os.getenv("UYBOR_CITIES", None) == ""
                       else _parse_int_list(os.getenv("UYBOR_CITIES", ""), (150,))),
         uybor_categories=_parse_int_list(os.getenv("UYBOR_CATEGORIES", ""), (7, 8, 9, 26, 27, 28)),
+        qayoda_cities=tuple(p.strip().strip("/") for p in os.getenv("QAYODA_CITIES", "toshkent-viloyati/chirchiq").split(",") if p.strip()),
+        qayoda_interval_min=int(os.getenv("QAYODA_INTERVAL_MIN", "60") or 0),
+        qayoda_max_new=int(os.getenv("QAYODA_MAX_NEW", "40") or 40),
         sync_interval_min=int(os.getenv("SYNC_INTERVAL_MIN", "30") or 0),
         joymee_districts=_parse_int_list(os.getenv("JOYMEE_DISTRICTS", ""), (166,)),
         joymee_categories=_parse_int_list(os.getenv("JOYMEE_CATEGORIES", ""), (4, 5)),

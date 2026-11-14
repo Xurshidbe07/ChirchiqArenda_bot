@@ -271,6 +271,18 @@ async def external_snapshot(source: str) -> dict[str, tuple[Decimal, str]]:
     return {r["source_id"]: (r["price"], r["title"]) for r in rows}
 
 
+async def skipped_ids(source: str) -> set[str]:
+    rows = await pool().fetch("SELECT source_id FROM scrape_skip WHERE source = $1", source)
+    return {r["source_id"] for r in rows}
+
+
+async def mark_skipped(source: str, source_id: str, reason: str) -> None:
+    await pool().execute(
+        "INSERT INTO scrape_skip (source, source_id, reason) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+        source, source_id, reason,
+    )
+
+
 async def touch_seen(source: str, source_ids: list[str]) -> None:
     if source_ids:
         await pool().execute(
@@ -383,6 +395,7 @@ async def stats() -> dict[str, Any]:
             (SELECT COUNT(*) FROM houses WHERE owner_id IS NOT NULL)     AS houses_clients,
             (SELECT COUNT(*) FROM houses WHERE source <> 'admin')        AS houses_joymee,
             (SELECT COUNT(*) FROM houses WHERE source = 'uybor')         AS houses_uybor,
+            (SELECT COUNT(*) FROM houses WHERE source = 'qayoda')        AS houses_qayoda,
             (SELECT COUNT(*) FROM houses WHERE status = 'pending')       AS houses_pending,
             (SELECT COUNT(*) FROM favorites)                             AS favorites_total,
             (SELECT COUNT(*) FROM admins)                                AS admins_total
@@ -391,6 +404,7 @@ async def stats() -> dict[str, Any]:
     out = dict(row)
     out["last_sync"] = await last_sync()
     out["last_sync_uybor"] = await last_sync("uybor")
+    out["last_sync_qayoda"] = await last_sync("qayoda")
     return out
 
 
