@@ -175,14 +175,22 @@ async def sync() -> dict[str, int]:
                 seen.pop(qid, None)
             fresh = [qid for qid in seen if qid not in existing]
             failures: dict[str, int] = {}
+            denied_streak = 0
             for qid in fresh[: config.qayoda_max_new]:
                 path, period = seen[qid]
                 try:
                     html = await _get(session, path)
+                    denied_streak = 0
                 except (QayodaError, aiohttp.ClientError, asyncio.TimeoutError) as exc:
                     log.warning("Tafsilot olinmadi %s: %s", qid, exc)
                     key = str(exc).split("->")[-1].strip()[:40] or type(exc).__name__
                     failures[key] = failures.get(key, 0) + 1
+                    # Sayt bu serverga ruxsat bermayapti (403/429) — urinishni to'xtatamiz, saytni yuklamaymiz
+                    if "403" in key or "429" in key:
+                        denied_streak += 1
+                        if denied_streak >= 3:
+                            failures["to'xtatildi (sayt rad etdi)"] = 1
+                            break
                     continue
                 data = parse_detail(html, path, period)
                 if data is None:
