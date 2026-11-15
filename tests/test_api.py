@@ -247,36 +247,37 @@ def test_superadmin_manages_admins_and_moderation():
 
 # ------------------------------------------------------------ scraper mapping ---
 
-def test_qayoda_parsers():
+def test_qayoda_catalog_cards():
     from decimal import Decimal
 
-    from bot.scrapers.qayoda import parse_detail, parse_list_page
+    from bot.scrapers.qayoda import parse_cards, parse_price
 
-    list_html = (
-        '<a href="/ru/obyavlenie/ijaraga-beriladi-2-xonali-kvartira-75-m-3-4-qavat-chirchiq-shahri-4981571">a</a>'
-        '<a href="/ru/obyavlenie/ijaraga-beriladi-tijorat-binosi-22-m-chirchiq-shahri-4986527">b</a>'
-        '<a href="/ru/obyavlenie/kunlik-ijaraga-4-xonali-dala-hovli-chirchiq-shahri-3959112">c</a>'
+    card = (
+        '<article data-impression="4981571" class="x"><a aria-label="a" href="/ru/obyavlenie/ijaraga-beriladi-2-xonali-kvartira-75-m-3-4-qavat-chirchiq-shahri-4981571">'
+        '<img alt="a" src="/img/p/3c/abc/1280.webp"/></a><span class="b">Собственник</span>'
+        '<p class="font-bold tracking-tight text-lg max-md:hidden">58 у.е.<span class="font-medium text-ink-3 text-sm"> <!-- -->в месяц</span></p>'
+        '<h3 class="text-sm"><a class="after" href="/ru/obyavlenie/ijaraga-beriladi-2-xonali-kvartira-75-m-3-4-qavat-chirchiq-shahri-4981571">'
+        'Квартира<span class="font-normal text-ink-2"> · <!-- -->2 комн. · 75 м² · 3/4 эт.</span></a></h3>'
+        '<div><p class="truncate">Чирчик, Ташкентская область</p><time dateTime="2026-11-13T13:39:00.000Z" class="s">вчера</time></div>'
+        '<span class="sr-only">Сдаётся 2-комнатная квартира, 75 м², 3/4 этаж — Чирчик</span></article>'
     )
-    found = parse_list_page(list_html)
-    assert set(found) == {"4981571", "3959112"}  # tijorat binosi tashlandi
-
-    ld = ('{"@context":"https://schema.org","@type":"RealEstateListing",'
-          '"name":"Сдаётся 2-комнатная квартира, 75 м², 3/4 этаж — Чирчик","datePosted":"2026-11-13T13:39:00.000Z",'
-          '"image":["https://qayoda.uz/img/p/a/1280.webp","https://qayoda.uz/img/p/b/1280.webp"],'
-          '"description":"Talabalar uchun","offers":{"@type":"Offer","price":58.46,"priceCurrency":"USD"},'
-          '"about":{"@type":"Place","address":{"addressLocality":"Чирчик","streetAddress":"Троицкий"}}}')
-    html = (f'<script type="application/ld+json">{ld}</script>'
-            '<a href="https://www.olx.uz/d/obyavlenie/kvartira-ID4rwlL.html">Оригинал</a>')
-    d = parse_detail(html, "/ru/obyavlenie/x-4981571", "month")
-    assert d["title"] == "Сдаётся 2-комнатная квартира, 75 м², 3/4 этаж"
-    assert d["rooms"] == 2 and d["area"] == Decimal("75") and d["floor"] == 3 and d["floors"] == 4
-    assert d["price"] == Decimal("58.46") and d["currency"] == "USD" and d["rent_period"] == "month"
-    assert d["address"] == "Chirchiq, Троицкий" and len(d["photo_urls"]) == 2
-    assert d["source_url"].startswith("https://www.olx.uz/") and d["origin_site"] == "olx.uz"
-    # asl manba topilmasa — qayoda sahifasining o'zi
-    d2 = parse_detail(f'<script type="application/ld+json">{ld}</script>', "/ru/obyavlenie/x-1", "day")
-    assert d2["source_url"] == "https://qayoda.uz/ru/obyavlenie/x-1" and d2["rent_period"] == "day"
-    assert parse_detail("<html></html>", "/x", "month") is None
+    commercial = ('<article data-impression="4986527"><a href="/ru/obyavlenie/ijaraga-beriladi-tijorat-binosi-22-m-chirchiq-shahri-4986527"></a>'
+                  '<p class="font-bold x">100 у.е.<span> в месяц</span></p></article>')
+    daily = ('<article data-impression="3959112"><a href="/ru/obyavlenie/kunlik-ijaraga-4-xonali-dala-hovli-chirchiq-shahri-3959112"></a>'
+             '<p class="font-bold x">1,2 млн сум<span> <!-- -->в сутки</span></p>'
+             '<h3><a href="/x">Дача<span class="n"> · <!-- -->4 комн.</span></a></h3></article>')
+    cards = parse_cards(card + commercial + daily, "month")
+    assert set(cards) == {"4981571", "3959112"}  # tijorat tashlandi
+    c = cards["4981571"]
+    assert c["price"] == Decimal("58") and c["currency"] == "USD" and c["rent_period"] == "month"
+    assert c["rooms"] == 2 and c["area"] == Decimal("75") and c["floor"] == 3 and c["floors"] == 4
+    assert c["title"] == "Сдаётся 2-комнатная квартира, 75 м², 3/4 этаж"
+    assert c["photo_urls"] == ["https://qayoda.uz/img/p/3c/abc/1280.webp"]
+    assert c["source_url"].startswith("https://qayoda.uz/ru/obyavlenie/") and "Uy egasidan" in c["description"]
+    assert c["external_created_at"] is not None and c["contact_phone"] is None
+    d = cards["3959112"]
+    assert d["rent_period"] == "day" and d["currency"] == "UZS" and d["price"] == Decimal("1200000") and d["rooms"] == 4
+    assert parse_price("600 тыс. сум") == (Decimal("600000"), "UZS") and parse_price("—") is None
 
 
 def test_uybor_listing_mapping():

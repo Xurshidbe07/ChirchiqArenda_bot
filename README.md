@@ -72,12 +72,13 @@ orqali (`api.joymee.uz/api/v1/announcement/?deal_type=2&district=166`), robots.t
   `JOYMEE_CATEGORIES` — turkumlar (4 Kvartira, 5 Uy/dacha, 6 Tijorat, 7 Yer), `USD_RATE` — y.e kursi.
 
 ### Uchinchi manba: Qayoda (agregator)
-`bot/scrapers/qayoda.py` — **qayoda.uz** katalogi (`/ru/arenda/toshkent-viloyati/chirchiq` va `/ru/posutochno/...`),
-e'lon sahifalaridagi schema.org `RealEstateListing` (JSON-LD). Qayoda Uybor, Realt24, Joymee, OLX va boshqa
-saytlardagi e'lonlarni yig'adi; asl manbasi Joymee/Uybor bo'lganlari o'tkazib yuboriladi (`scrape_skip`),
-qolganlarida asl e'longa havola saqlanadi (market'da «💬 Bog'lanish ↗»).
-robots.txt ga rioya: `/api/` va qidiruvga murojaat yo'q, **Crawl-delay 10s** — shu sabab alohida fon vazifasida
-har `QAYODA_INTERVAL_MIN` (60) daqiqada, bir sinxronda ko'pi bilan `QAYODA_MAX_NEW` (40) yangi e'lon.
+`bot/scrapers/qayoda.py` — **qayoda.uz** katalogi (`/ru/arenda/toshkent-viloyati/chirchiq`, `/ru/posutochno/...`).
+Qayoda Uybor, Realt24, Joymee, OLX va boshqa saytlardagi e'lonlarni yig'adi. Ma'lumot **faqat katalog kartasidan**
+olinadi (narx, turi, xona, maydon, qavat, sarlavha, sana, 1-rasm): e'lon tafsilot sahifalari server IP'laridan
+HTTP 403 qaytaradi va bu cheklov aylanib o'tilmaydi. «💬 Bog'lanish ↗» qayoda'dagi e'lon sahifasini ochadi.
+Joymee/Uybor nusxalari (ijara turi + xona + maydon ±1 m² + narx ±3%) o'tkazib yuboriladi.
+robots.txt ga rioya: `/api/` va qidiruvga murojaat yo'q, **Crawl-delay 10s**; alohida fon vazifasi,
+har `QAYODA_INTERVAL_MIN` (60) daqiqada, bir sinxron ~1 daqiqa.
 
 ### Ikkinchi manba: Uybor scraper
 `bot/scrapers/uybor.py` — **uybor.uz** ochiq API'si (`api.uybor.uz/api/v1/listings?operationType__eq=rent&city__eq=150`),

@@ -1,21 +1,21 @@
-"""Qayoda (qayoda.uz) dan Chirchiq ijara e'lonlarini tortish.
+"""Qayoda (qayoda.uz) dan Chirchiq ijara e'lonlarini tortish — faqat katalog sahifalaridan.
 
-Qayoda — agregator: Uybor, Realt24, Joymee va boshqa saytlardagi e'lonlarni bir katalogda ko'rsatadi.
-robots.txt ochiq sahifalarni ruxsat etadi, lekin /api/, qidiruv (/poisk) va kabinetni yopadi hamda
-Crawl-delay: 10 talab qiladi. Shuning uchun:
-  * faqat ochiq katalog sahifalari (/ru/arenda/..., /ru/posutochno/...) va e'lon sahifalari
-    (/ru/obyavlenie/...) o'qiladi, /api/ ga murojaat qilinmaydi;
-  * HAR bir so'rovdan oldin kamida 10 soniya kutiladi;
-  * tafsilot faqat yangi e'lonlar uchun yuklanadi, bir sinxronda ko'pi bilan QAYODA_MAX_NEW ta.
+Qayoda — agregator (Uybor, Realt24, Joymee, OLX va boshq.). robots.txt ochiq katalog sahifalarini
+ruxsat etadi, /api/, qidiruv (/poisk) va kabinetni yopadi, Crawl-delay: 10 talab qiladi.
 
-E'lon ma'lumoti sahifadagi schema.org RealEstateListing (JSON-LD) dan olinadi.
-Asl manbasi Joymee yoki Uybor bo'lgan e'lonlar o'tkazib yuboriladi — ular to'g'ridan-to'g'ri tortiladi.
-Har e'londa asl manbaga havola saqlanadi (market'da «Bog'lanish ↗»).
+Nega faqat katalog: e'lon tafsilot sahifalari server (Render) IP'laridan HTTP 403 qaytaradi.
+Bu cheklovni aylanib o'tmaymiz — kerakli ma'lumot katalog kartasining o'zida bor:
+  narx (у.е. / сум, oyiga / kuniga), turi, xonalar, maydon, qavat, sarlavha, joy, sana, 1-rasm.
+Tavsif va asl manba kartada yo'q — «Bog'lanish ↗» qayoda'dagi e'lon sahifasini ochadi
+(foydalanuvchi brauzeridan ochiladi).
+
+Qoidalar: faqat /ru/arenda/... va /ru/posutochno/... katalog sahifalari, har so'rov orasida 10.5 s.
+Joymee/Uybor'dan to'g'ridan-to'g'ri olingan e'lonlarning nusxalari (xona + maydon + narx mos) o'tkazib yuboriladi.
 """
 from __future__ import annotations
 
 import asyncio
-import json
+import html as html_lib
 import logging
 import re
 import time
@@ -41,9 +41,15 @@ SECTIONS = (("arenda", "month"), ("posutochno", "day"))
 
 # Turar joy bo'lmagan e'lonlar (slug bo'yicha)
 _SKIP_SLUG = ("tijorat", "yer-uchastka", "ofis", "ombor", "dokon", "biznes", "ishlab-chiqarish", "bino-")
-_AD_RE = re.compile(r'href="(/ru/obyavlenie/([a-z0-9-]+)-(\d+))"')
-_ORIGIN_RE = re.compile(r'https?://(?:www\.)?(olx\.uz|joymee\.uz|uybor\.uz|realt24\.uz)/[^"\'<>\s\\]+')
-_LD_RE = re.compile(r'<script type="application/ld\+json"[^>]*>(.*?)</script>', re.S)
+_SKIP_TYPE = ("Коммерческ", "Участок", "Офис", "Склад", "Бизнес", "Помещение")
+
+_ARTICLE_RE = re.compile(r'<article data-impression="(\d+)"(.*?)</article>', re.S)
+_HREF_RE = re.compile(r'href="(/ru/obyavlenie/([a-z0-9-]+)-(\d+))"')
+_PRICE_RE = re.compile(r'<p class="font-bold[^"]*">\s*([^<]+?)\s*<span[^>]*>\s*(?:<!-- -->)?\s*([^<]*)</span>')
+_H3_RE = re.compile(r'<h3[^>]*>.*?<a[^>]*>([^<]*)<span[^>]*>\s*·\s*(?:<!-- -->)?([^<]*)</span>', re.S)
+_SR_RE = re.compile(r'<span class="sr-only">([^<]+)</span>')
+_PLACE_RE = re.compile(r'<p class="truncate">([^<]+)</p>\s*<time dateTime="([^"]+)"')
+_IMG_RE = re.compile(r'\ssrc="(/img/[^"]+)"')
 
 _last_request = 0.0
 
@@ -60,96 +66,116 @@ async def _get(session: aiohttp.ClientSession, path: str) -> str:
         await asyncio.sleep(wait)
     _last_request = time.monotonic()
     async with session.get(BASE + path, timeout=aiohttp.ClientTimeout(total=40)) as r:
-        if r.status == 429:
-            raise QayodaError(f"{path} -> HTTP 429 (sekinlashtirish so'raldi)")
         if r.status != 200:
             raise QayodaError(f"{path} -> HTTP {r.status}")
         return await r.text()
 
 
-def _dec(v: Any) -> Decimal | None:
+def _num(s: str) -> Decimal | None:
+    s = s.replace(" ", " ").replace(" ", " ").strip()
+    m = re.search(r"[\d\s]+(?:[.,]\d+)?", s)
+    if not m:
+        return None
     try:
-        return Decimal(str(v)) if v not in (None, "") else None
+        return Decimal(m.group(0).replace(" ", "").replace(",", "."))
     except InvalidOperation:
         return None
 
 
-def parse_list_page(html: str) -> dict[str, str]:
-    """Katalog sahifasidan e'lonlar: qayoda_id -> yo'l. Turar joy bo'lmaganlar tashlanadi."""
-    out: dict[str, str] = {}
-    for path, slug, qid in _AD_RE.findall(html):
+def parse_price(text: str) -> tuple[Decimal, str] | None:
+    """'58 у.е.' -> (58, USD); '600 тыс. сум' -> (600000, UZS); '1,2 млн сум' -> (1200000, UZS)."""
+    t = html_lib.unescape(text).lower()
+    n = _num(t)
+    if n is None:
+        return None
+    if "у.е" in t or "$" in t:
+        return n, "USD"
+    if "млн" in t:
+        n *= 1_000_000
+    elif "тыс" in t:
+        n *= 1_000
+    return n, "UZS"
+
+
+def parse_cards(page_html: str, rent_period: str) -> dict[str, dict[str, Any]]:
+    """Katalog sahifasidagi kartalar: qayoda_id -> houses maydonlari. Turar joy bo'lmaganlar tashlanadi."""
+    out: dict[str, dict[str, Any]] = {}
+    for qid, body in _ARTICLE_RE.findall(page_html):
+        href = _HREF_RE.search(body)
+        if not href:
+            continue
+        path, slug = href.group(1), href.group(2)
         if any(k in slug for k in _SKIP_SLUG):
             continue
-        out[qid] = path
+        h3 = _H3_RE.search(body)
+        kind = html_lib.unescape(h3.group(1)).strip() if h3 else ""
+        params = html_lib.unescape(h3.group(2)).strip() if h3 else ""
+        if any(k in kind for k in _SKIP_TYPE):
+            continue
+        pm = _PRICE_RE.search(body)
+        price = parse_price(pm.group(1)) if pm else None
+        if price is None:
+            continue
+        unit = html_lib.unescape(pm.group(2)).lower()
+        period = "day" if ("сут" in unit or "день" in unit or "ночь" in unit) else rent_period
+
+        rooms = re.search(r"(\d+)\s*комн", params)
+        area = re.search(r"([\d]+(?:[.,]\d+)?)\s*м²", params)
+        floors = re.search(r"(\d+)\s*/\s*(\d+)\s*эт", params)
+        sr = _SR_RE.search(body)
+        title = html_lib.unescape(sr.group(1)).strip() if sr else (f"{kind} · {params}".strip(" ·") or "E'lon")
+        title = re.sub(r"\s+—\s+[^—]+$", "", title)
+        place = _PLACE_RE.search(body)
+        try:
+            posted = datetime.fromisoformat(place.group(2).replace("Z", "+00:00")) if place else None
+        except ValueError:
+            posted = None
+        img = _IMG_RE.search(body)
+        owner = "Собственник" in body
+
+        out[qid] = {
+            "rent_period": period,
+            "title": title[:200],
+            "address": "Chirchiq",
+            "rooms": int(rooms.group(1)) if rooms and 0 < int(rooms.group(1)) <= 50 else None,
+            "price": price[0],
+            "currency": price[1],
+            "description": "\n".join(p for p in (f"{kind} · {params}".strip(" ·"), "Uy egasidan" if owner else "") if p),
+            "contact_phone": None,
+            "district": "Chirchiq shahar",
+            "area": Decimal(area.group(1).replace(",", ".")) if area else None,
+            "floor": int(floors.group(1)) if floors else None,
+            "floors": int(floors.group(2)) if floors else None,
+            "photo_urls": [BASE + img.group(1)] if img else [],
+            "seller_name": None,
+            "seller_username": None,
+            "lat": None,
+            "lon": None,
+            "external_created_at": posted,
+            "source_url": BASE + path,       # «Bog'lanish ↗» shu sahifani ochadi
+            "views": 0,
+        }
     return out
 
 
-def parse_detail(html: str, path: str, rent_period: str) -> dict[str, Any] | None:
-    """E'lon sahifasidagi RealEstateListing (JSON-LD) ni houses maydonlariga o'giradi."""
-    listing = None
-    for raw in _LD_RE.findall(html):
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
+def _is_duplicate(d: dict[str, Any], others: list[tuple]) -> bool:
+    """Joymee/Uybor'dagi e'lon bilan bir xilmi: ijara turi, xona, maydon (±1 m²) va narx (±3%) mos."""
+    if d["area"] is None:
+        return False
+    price_uzs = db.to_uzs(d["price"], d["currency"])
+    for period, rooms, area, other_uzs in others:
+        if period != d["rent_period"] or rooms != d["rooms"] or area is None or other_uzs is None:
             continue
-        for item in data if isinstance(data, list) else [data]:
-            if isinstance(item, dict) and item.get("@type") == "RealEstateListing":
-                listing = item
-    if listing is None:
-        return None
-
-    name = (listing.get("name") or "").strip()
-    offer = listing.get("offers") or {}
-    price = _dec(offer.get("price")) or Decimal(0)
-    currency = "USD" if str(offer.get("priceCurrency", "USD")).upper() == "USD" else "UZS"
-    addr = ((listing.get("about") or {}).get("address") or {})
-    street = (addr.get("streetAddress") or "").strip()
-    locality = (addr.get("addressLocality") or "").strip()
-    address = "Chirchiq" + (f", {street}" if street and street != locality else "")
-
-    rooms = re.search(r"(\d+)\s*-?\s*комн", name)
-    area = re.search(r"([\d]+(?:[.,]\d+)?)\s*м²", name)
-    floors = re.search(r"(\d+)\s*/\s*(\d+)\s*эт", name)
-    origin = _ORIGIN_RE.search(html)
-
-    posted = listing.get("datePosted")
-    try:
-        posted_dt = datetime.fromisoformat(posted.replace("Z", "+00:00")) if posted else None
-    except ValueError:
-        posted_dt = None
-
-    title = re.sub(r"\s+—\s+Чирчик\s*$", "", name) or "E'lon"
-    return {
-        "rent_period": rent_period,
-        "title": title[:200],
-        "address": address[:250],
-        "rooms": int(rooms.group(1)) if rooms and 0 < int(rooms.group(1)) <= 50 else None,
-        "price": price,
-        "currency": currency,
-        "description": (listing.get("description") or "").strip()[:4000],
-        "contact_phone": None,
-        "district": "Chirchiq shahar",
-        "area": _dec(area.group(1).replace(",", ".")) if area else None,
-        "floor": int(floors.group(1)) if floors else None,
-        "floors": int(floors.group(2)) if floors else None,
-        "photo_urls": [u for u in (listing.get("image") or []) if isinstance(u, str)][:12],
-        "seller_name": None,
-        "seller_username": None,
-        "lat": None,
-        "lon": None,
-        "external_created_at": posted_dt,
-        # Bog'lanish uchun asl e'lon (bo'lmasa qayoda sahifasi)
-        "source_url": origin.group(0) if origin else BASE + path,
-        "origin_site": origin.group(1) if origin else "qayoda.uz",
-        "views": 0,
-    }
+        if abs(Decimal(area) - d["area"]) <= 1 and abs(Decimal(other_uzs) - price_uzs) <= price_uzs * Decimal("0.03"):
+            return True
+    return False
 
 
 async def sync() -> dict[str, int]:
-    """Qayoda bilan sinxronlash (sekin: Crawl-delay 10s). Natija: added/updated/deactivated/seen."""
+    """Qayoda katalogi bilan sinxronlash. Natija: added/updated/deactivated/seen (+skipped_dupes)."""
     log_id = await db.sync_started(SOURCE)
-    added = skipped = deactivated = 0
-    seen: dict[str, tuple[str, str]] = {}  # qid -> (path, rent_period)
+    added = updated = deactivated = skipped = 0
+    cards: dict[str, dict[str, Any]] = {}
     try:
         async with aiohttp.ClientSession(headers=HEADERS) as session:
             for city_path in config.qayoda_cities:
@@ -157,71 +183,42 @@ async def sync() -> dict[str, int]:
                     for page in range(1, MAX_LIST_PAGES + 1):
                         q = f"/ru/{section}/{city_path}" + (f"?page={page}" if page > 1 else "")
                         try:
-                            html = await _get(session, q)
+                            page_html = await _get(session, q)
                         except QayodaError as exc:
                             if "404" in str(exc):
                                 break
                             raise
-                        found = parse_list_page(html)
-                        new = {k: v for k, v in found.items() if k not in seen}
-                        for qid, path in new.items():
-                            seen[qid] = (path, period)
-                        if not new or f"page={page + 1}" not in html:
+                        found = parse_cards(page_html, period)
+                        new = {k: v for k, v in found.items() if k not in cards}
+                        cards.update(new)
+                        if not new or f"page={page + 1}" not in page_html:
                             break
 
-            existing = await db.external_snapshot(SOURCE)
-            skip = await db.skipped_ids(SOURCE)
-            for qid in skip:
-                seen.pop(qid, None)
-            fresh = [qid for qid in seen if qid not in existing]
-            failures: dict[str, int] = {}
-            denied_streak = 0
-            for qid in fresh[: config.qayoda_max_new]:
-                path, period = seen[qid]
-                try:
-                    html = await _get(session, path)
-                    denied_streak = 0
-                except (QayodaError, aiohttp.ClientError, asyncio.TimeoutError) as exc:
-                    log.warning("Tafsilot olinmadi %s: %s", qid, exc)
-                    key = str(exc).split("->")[-1].strip()[:40] or type(exc).__name__
-                    failures[key] = failures.get(key, 0) + 1
-                    # Sayt bu serverga ruxsat bermayapti (403/429) — urinishni to'xtatamiz, saytni yuklamaymiz
-                    if "403" in key or "429" in key:
-                        denied_streak += 1
-                        if denied_streak >= 3:
-                            failures["to'xtatildi (sayt rad etdi)"] = 1
-                            break
-                    continue
-                data = parse_detail(html, path, period)
-                if data is None:
-                    hint = "challenge" if ("cf-chl" in html or "Just a moment" in html) else f"no-ld({len(html)}b)"
-                    failures[hint] = failures.get(hint, 0) + 1
-                    continue
-                origin = data.pop("origin_site")
-                if origin in ("joymee.uz", "uybor.uz"):
-                    # bu manbalar to'g'ridan-to'g'ri tortiladi — takror bo'lmasin va qayta yuklanmasin
-                    await db.mark_skipped(SOURCE, qid, f"dupe:{origin}")
-                    skipped += 1
-                    seen.pop(qid, None)
-                    continue
-                _, inserted = await db.upsert_external_house(SOURCE, qid, data)
-                added += int(inserted)
+        others = [(r["rent_period"], r["rooms"], r["area"], r["price_uzs"]) for r in await db.pool().fetch(
+            "SELECT rent_period, rooms, area, price_uzs FROM houses "
+            "WHERE source IN ('joymee', 'uybor') AND is_active")]
+        seen_ids: list[str] = []
+        for qid, d in cards.items():
+            if _is_duplicate(d, others):
+                skipped += 1
+                continue
+            _, inserted = await db.upsert_external_house(SOURCE, qid, d)
+            seen_ids.append(qid)
+            added += int(inserted)
+            updated += int(not inserted)
 
-        seen_ids = list(seen.keys())
         await db.touch_seen(SOURCE, seen_ids)
-        # Hech narsa yuklanmagan bo'lsa yopmaymiz — vaqtinchalik xato bazani bo'shatib yubormasin
-        if fresh and not added and failures:
-            deactivated = 0
-        else:
-            deactivated = await db.deactivate_missing(SOURCE, seen_ids)
-        note = ("tafsilot xatolari: " + ", ".join(f"{k}×{v}" for k, v in failures.items())) if failures else None
-        await db.sync_finished(log_id, added=added, updated=0, deactivated=deactivated, seen=len(seen_ids),
-                               error=note)
-        log.info("Qayoda sinx: ko'rildi %s, yangi %s, takror (joymee/uybor) %s, yopildi %s",
-                 len(seen_ids), added, skipped, deactivated)
+        # Katalog bo'sh qaytsa (sayt o'zgargan / vaqtinchalik xato) — e'lonlarni yopmaymiz
+        deactivated = await db.deactivate_missing(SOURCE, seen_ids) if seen_ids else 0
+        note = None if cards else "katalogda e'lon topilmadi (sahifa tuzilishi o'zgargan bo'lishi mumkin)"
+        await db.sync_finished(log_id, added=added, updated=updated, deactivated=deactivated,
+                               seen=len(seen_ids), error=note)
+        log.info("Qayoda sinx: kartalar %s, yangi %s, yangilandi %s, takror %s, yopildi %s",
+                 len(cards), added, updated, skipped, deactivated)
     except Exception as exc:  # noqa: BLE001
         log.exception("Qayoda sinx xatosi")
-        await db.sync_finished(log_id, added=added, updated=0, deactivated=deactivated,
-                               seen=len(seen), error=str(exc)[:500])
+        await db.sync_finished(log_id, added=added, updated=updated, deactivated=deactivated,
+                               seen=len(cards), error=str(exc)[:500])
         raise
-    return {"added": added, "updated": 0, "deactivated": deactivated, "seen": len(seen), "skipped_dupes": skipped}
+    return {"added": added, "updated": updated, "deactivated": deactivated,
+            "seen": len(cards), "skipped_dupes": skipped}
