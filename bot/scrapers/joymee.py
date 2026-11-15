@@ -30,7 +30,7 @@ log = logging.getLogger("scraper.joymee")
 SOURCE = "joymee"
 API = "https://api.joymee.uz/api/v1/"
 HEADERS = {
-    "User-Agent": "ChirchiqArendaBot/1.0 (student project; Telegram @chirchiqarenda_bot)",
+    "User-Agent": "ArendaUzBot/1.0 (student project; Telegram @chirchiqarenda_bot)",
     "Accept": "application/json",
     "Origin": "https://joymee.uz",
     "Referer": "https://joymee.uz/",

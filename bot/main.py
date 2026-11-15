@@ -34,6 +34,30 @@ _CMD_DESC = {
 }
 
 
+BOT_NAME = "Arenda.uz"
+_SHORT_DESC = {
+    "uz": "Toshkent shahri, Chirchiq va atrofidagi ijara uylar bir joyda.",
+    "ru": "Аренда жилья в Ташкенте, Чирчике и пригородах в одном месте.",
+    "en": "Rental housing in Tashkent, Chirchiq and nearby districts.",
+}
+
+
+async def set_profile(bot: Bot) -> None:
+    """Telegram'dagi bot nomi va qisqa tavsifi. Telegram bu chaqiruvlarni cheklaydi — faqat farq qilsa o'rnatamiz."""
+    try:
+        if (await bot.get_my_name()).name != BOT_NAME:
+            await bot.set_my_name(name=BOT_NAME)
+            log.info("Bot nomi o'rnatildi: %s", BOT_NAME)
+    except Exception as exc:  # noqa: BLE001 — 429 bo'lsa keyingi ishga tushishda qayta urinadi
+        log.warning("Bot nomi o'rnatilmadi: %s", exc)
+    for code, text in (("", _SHORT_DESC["uz"]), *((c, _SHORT_DESC[c]) for c in LANGS)):
+        try:
+            if (await bot.get_my_short_description(language_code=code or None)).short_description != text:
+                await bot.set_my_short_description(short_description=text, language_code=code or None)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Qisqa tavsif (%s) o'rnatilmadi: %s", code or "default", exc)
+
+
 async def set_commands(bot: Bot, webapp_url: str) -> None:
     # Hamma uchun: /start, /lang (har tilda)
     for code in LANGS:
@@ -119,6 +143,7 @@ async def main() -> None:
         log.info("Market Mini App: %s/market", webapp_url)
 
     await set_commands(bot, webapp_url)
+    await set_profile(bot)
     sync.start_background()
     keepalive.start_background(webapp_url)
     log.info("Bot ishga tushdi. Superadminlar: %s", sorted(config.admin_ids))

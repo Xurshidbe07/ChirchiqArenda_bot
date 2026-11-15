@@ -30,7 +30,7 @@ log = logging.getLogger("scraper.uybor")
 SOURCE = "uybor"
 API = "https://api.uybor.uz/api/v1/"
 HEADERS = {
-    "User-Agent": "ChirchiqArendaBot/1.0 (student project; Telegram @chirchiqarenda_bot)",
+    "User-Agent": "ArendaUzBot/1.0 (student project; Telegram @chirchiqarenda_bot)",
     "Accept": "application/json",
     "Origin": "https://uybor.uz",
     "Referer": "https://uybor.uz/",

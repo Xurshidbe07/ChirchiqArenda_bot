@@ -1,4 +1,4 @@
-# ChirchiqArendabot 🏠
+# Arenda.uz — ijara uylar boti 🏠
 
 [![CI/CD](https://github.com/Xurshidbe07/ChirchiqArenda_bot/actions/workflows/ci.yml/badge.svg)](https://github.com/Xurshidbe07/ChirchiqArenda_bot/actions/workflows/ci.yml)
 
