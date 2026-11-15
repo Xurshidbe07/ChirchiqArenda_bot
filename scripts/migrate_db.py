@@ -26,7 +26,7 @@ TABLES = ("users", "houses", "favorites", "admins", "sync_log", "scrape_skip")
 
 def load_urls() -> tuple[str, str]:
     env = {}
-    for line in (ROOT / ".env.migrate").read_text(encoding="utf-8").splitlines():
+    for line in (ROOT / ".env.migrate").read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)

@@ -17,10 +17,10 @@ services:
         sync: false
       - key: ADMIN_IDS
         sync: false
+      # Baza Neon'da (doimiy bepul): Neon -> chirchiq-arenda -> Connect -> direct connection string.
+      # Render dashboard'da qo'lda kiritiladi (maxfiy), blueprint uni o'zgartirmaydi.
       - key: DATABASE_URL
-        fromDatabase:
-          name: chirchiq-arenda-db
-          property: connectionString
+        sync: false
       # WEBAPP_URL avtomatik: Render RENDER_EXTERNAL_URL beradi, kod shuni oladi
       - key: KEEPALIVE_MIN
         value: "10"
@@ -33,6 +33,8 @@ services:
       - key: USD_RATE
         value: "12500"
 
+# Eski Render bazasi (ma'lumotlar 2026-11-15 da Neon'ga ko'chirildi). Bot endi undan foydalanmaydi;
+# bepul muddati tugagach (~1-dekabr) Render uni o'zi o'chiradi. Zaxira sifatida shu vaqtgacha qoldirildi.
 databases:
   - name: chirchiq-arenda-db
     plan: free

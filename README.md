@@ -145,8 +145,9 @@ Repo'da tayyor [render.yaml](render.yaml) bor: Web Service (bot + Mini App) va P
 - Bepul Web Service 15 daqiqa so'rovsiz qolsa uxlaydi. Bot o'zi har `KEEPALIVE_MIN` (10) daqiqada
   `/health` ga so'rov yuborib uyg'oq turadi (`bot/keepalive.py`). Qo'shimcha kafolat uchun
   [UptimeRobot](https://uptimerobot.com) da `https://<nomi>.onrender.com/health` ni 5 daqiqalik monitor qiling.
-- Bepul Render Postgres 30 kundan keyin o'chadi. Uzoq muddat uchun [Neon](https://neon.tech) yoki
-  [Supabase](https://supabase.com) bepul bazasini olib, `DATABASE_URL` ni shunga almashtiring.
+- **Baza Neon'da** (doimiy bepul, Frankfurt, PostgreSQL 18): Render'da `DATABASE_URL` = Neon'ning *direct*
+  connection string'i (pooled emas — asyncpg prepared statement'lari uchun). Eski Render Postgres faqat zaxira.
+  Boshqa bazaga ko'chirish: `.env.migrate` ga `RENDER_DB_URL` va `NEON_DB_URL` yozib, `python scripts/migrate_db.py`.
 
 Boshqa hostinglar (Railway, Fly.io, VPS) uchun: `PORT` berilsa bot `0.0.0.0:$PORT` da tinglaydi,
 `WEBAPP_URL` ga ochiq HTTPS manzilni yozing.
