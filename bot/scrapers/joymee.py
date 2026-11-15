@@ -22,6 +22,7 @@ from typing import Any
 import aiohttp
 
 from bot import db
+from bot.areas import area_or_default
 from bot.config import config
 
 log = logging.getLogger("scraper.joymee")
@@ -35,7 +36,6 @@ HEADERS = {
     "Referer": "https://joymee.uz/",
 }
 PER_PAGE = 50
-MAX_PAGES = 20
 PAUSE = 0.4  # soniya, so'rovlar orasida
 
 
@@ -96,9 +96,12 @@ def map_detail(det: dict[str, Any]) -> dict[str, Any]:
         rooms = None
     floor = d.get("floor_number")
     floors = d.get("floors_count")
-    district = (det.get("district") or {}).get("name") or None
+    raw_district = (det.get("district") or {}).get("name") or None
     region = (det.get("region") or {}).get("name") or ""
-    address = det.get("address_line") or ", ".join(p for p in (region, district) if p)
+    address = det.get("address_line") or ", ".join(p for p in (region, raw_district) if p)
+    region_id = (det.get("region") or {}).get("id")
+    district = area_or_default("Toshkent shahri" if region_id == 59 else (raw_district or region or "Toshkent viloyati"),
+                               raw_district, det.get("address_line"))
     stats = det.get("stats") or {}
     return {
         "rent_period": "day" if det.get("deal_type") == 1 else "month",
@@ -124,16 +127,34 @@ def map_detail(det: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _categories_for(deal_type: int) -> str:
+    """API filtri: oylik ijara uchun JOYMEE_CATEGORIES, kunlik uchun ularga mos kunlik turkumlar."""
+    if deal_type == 1:
+        cats = [k for k, v in _DAILY_TO_MONTHLY_CATEGORY.items() if v in config.joymee_categories]
+    else:
+        cats = list(config.joymee_categories)
+    return ",".join(str(c) for c in cats)
+
+
+def _areas() -> list[str]:
+    """So'rov filtrlari: har region alohida, viloyat tumanlari bitta so'rovda (vergul bilan)."""
+    out = [f"region={r}" for r in config.joymee_regions]
+    if config.joymee_districts:
+        out.append("district=" + ",".join(str(d) for d in config.joymee_districts))
+    return out
+
+
 async def fetch_listing_ids(session: aiohttp.ClientSession) -> dict[str, dict[str, Any]]:
-    """Barcha sahifalardan e'lon qisqa ma'lumotlarini yig'adi: source_id -> listing item."""
+    """Har hudud/ijara turi bo'yicha eng yangi e'lonlar (JOYMEE_MAX_PAGES x 50): source_id -> listing item."""
     found: dict[str, dict[str, Any]] = {}
     for deal_type in config.joymee_deal_types:
-        for district in config.joymee_districts:
+        cats = _categories_for(deal_type)
+        for area in _areas():
             page = 1
-            while page <= MAX_PAGES:
+            while page <= config.joymee_max_pages:
                 data = await _get(
                     session,
-                    f"announcement/?deal_type={deal_type}&district={district}"
+                    f"announcement/?deal_type={deal_type}&{area}&category={cats}"
                     f"&ordering=newest&page={page}&perPagePlain={PER_PAGE}",
                 )
                 for item in data.get("results") or []:
@@ -157,11 +178,20 @@ async def sync() -> dict[str, int]:
             existing = await db.external_snapshot(SOURCE)
             seen_ids = list(listing.keys())
 
+            skip = await db.skipped_ids(SOURCE)
+            for sid in skip & set(seen_ids):
+                seen_ids.remove(sid)
+            fetched = 0
             for sid, item in listing.items():
+                if sid in skip:
+                    continue
                 price_now = _dec((item.get("pricing") or {}).get("price"))
                 title_now = (item.get("title") or "").strip()[:200]
                 if sid in existing and existing[sid][0] == price_now and existing[sid][1] == title_now:
                     continue  # o'zgarmagan — tafsilotni qayta yuklamaymiz
+                if fetched >= config.joymee_max_new:
+                    continue  # qolganlari keyingi sinxronda (birinchi to'ldirish bosqichma-bosqich)
+                fetched += 1
                 await asyncio.sleep(PAUSE)
                 try:
                     det = await _get(session, f"announcement/{sid}/")
@@ -170,6 +200,7 @@ async def sync() -> dict[str, int]:
                     continue
                 if not category_allowed(det.get("category")):
                     seen_ids.remove(sid)  # tijorat/yer kabi keraksiz turkum — bizda bo'lmasin
+                    await db.mark_skipped(SOURCE, sid, f"category:{det.get('category')}")
                     continue
                 data = map_detail(det)
                 _, inserted = await db.upsert_external_house(SOURCE, sid, data)
@@ -181,8 +212,8 @@ async def sync() -> dict[str, int]:
             await db.touch_seen(SOURCE, seen_ids)
             deactivated = await db.deactivate_missing(SOURCE, seen_ids)
         await db.sync_finished(log_id, added=added, updated=updated, deactivated=deactivated, seen=len(seen_ids))
-        log.info("Joymee sinx: ko'rildi %s, yangi %s, yangilandi %s, yopildi %s",
-                 len(seen_ids), added, updated, deactivated)
+        log.info("Joymee sinx: ko'rildi %s, yangi %s, yangilandi %s, yopildi %s, kutmoqda %s",
+                 len(seen_ids), added, updated, deactivated, max(0, len(listing) - len(existing) - fetched))
     except Exception as exc:  # noqa: BLE001
         log.exception("Joymee sinx xatosi")
         await db.sync_finished(log_id, added=added, updated=updated, deactivated=deactivated,

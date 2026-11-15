@@ -1,10 +1,10 @@
 """Uybor (uybor.uz) dan Chirchiq ijara e'lonlarini tortish.
 
 Saytning o'zi ishlatadigan ochiq JSON API (robots.txt faqat /admin/, /cgi-bin/, /tmp/ ni yopadi):
-  GET https://api.uybor.uz/api/v1/listings?mode=search&operationType__eq=rent&city__eq=150
+  GET https://api.uybor.uz/api/v1/listings?mode=search&operationType__eq=rent&region__eq=13
       &embed=category,subCategory,city,district,zone,media,user&limit=..&offset=..
 
-city 150 = Chirchiq (Toshkent viloyati, region 12).
+region 13 = Toshkent shahri, region 12 = Toshkent viloyati (city 150 = Chirchiq).
 Kategoriyalar: 7 Kvartira, 8 Uy, 9 Kottej, 26 Xona, 27 Dacha, 28 Xususiy uy (UYBOR_CATEGORIES).
 pricePeriodUnit: "day" -> kunlik ijara, aks holda oylik.
 
@@ -22,6 +22,7 @@ from typing import Any
 import aiohttp
 
 from bot import db
+from bot.areas import area_or_default
 from bot.config import config
 
 log = logging.getLogger("scraper.uybor")
@@ -34,9 +35,8 @@ HEADERS = {
     "Origin": "https://uybor.uz",
     "Referer": "https://uybor.uz/",
 }
-EMBED = "category,subCategory,city,district,zone,media,user"
+EMBED = "category,subCategory,region,city,district,zone,media,user"
 PER_PAGE = 50
-MAX_PAGES = 20
 PAUSE = 0.4
 
 # Chirchiq city_id -> bazadagi mavze nomi (Joymee bilan bir xil bo'lsin, filtr birlashsin)
@@ -95,11 +95,17 @@ def map_listing(a: dict[str, Any]) -> dict[str, Any]:
     currency = "USD" if str(a.get("priceCurrency", "")).lower() == "usd" else "UZS"
     rooms = _int(a.get("room"))
     city_id = a.get("cityId")
-    district = _CITY_DISTRICT.get(city_id) or _name(a.get("city")) or _name(a.get("district"))
+    region_id = a.get("regionId")
     sub = _name(a.get("subCategory")) or _name(a.get("category")) or "E'lon"
     street = (a.get("address") or "").strip()
-    city_name = "Chirchiq" if city_id == 150 else (_name(a.get("city")) or "")
-    address = ", ".join(p for p in (city_name, street) if p) or "Chirchiq"
+    city_ru = _name(a.get("city"), "ru")
+    district_ru = _name(a.get("district"), "ru")
+    # tanilmagan posyolka/qishloq filtrni to'ldirib yubormasin — viloyat nomi ostida
+    default_area = "Toshkent shahri" if region_id == 13 else "Toshkent viloyati"
+    district = _CITY_DISTRICT.get(city_id) or area_or_default(default_area, district_ru, city_ru, street)
+    city_name = "Chirchiq" if city_id == 150 else ("Toshkent" if region_id == 13 else (city_ru or ""))
+    show_district = district and (not city_name or city_name.lower() not in district.lower())
+    address = ", ".join(p for p in (city_name, district if show_district else "", street) if p) or district
     desc = (a.get("description") or "").strip()
     # Uybor'da alohida sarlavha yo'q: turkum + xona + tavsif boshidan yasaymiz
     first_line = desc.split("\n", 1)[0].strip()
@@ -133,14 +139,16 @@ def map_listing(a: dict[str, Any]) -> dict[str, Any]:
 
 
 async def fetch_listings(session: aiohttp.ClientSession) -> dict[str, dict[str, Any]]:
+    """UYBOR_REGIONS (region__eq) va UYBOR_CITIES (city__eq) bo'yicha eng yangi ijara e'lonlari."""
     found: dict[str, dict[str, Any]] = {}
-    for city in config.uybor_cities:
-        offset = 0
-        for _ in range(MAX_PAGES):
+    filters = [f"region__eq={r}" for r in config.uybor_regions] + [f"city__eq={c}" for c in config.uybor_cities]
+    for flt in filters:
+        for page in range(1, config.uybor_max_pages + 1):
+            # order=upAt — eng yangi birinchi (saytning o'zi shunday so'raydi); sahifalash `page` bilan
             data = await _get(
                 session,
-                f"listings?mode=search&operationType__eq=rent&city__eq={city}"
-                f"&embed={EMBED}&order=-upAt&limit={PER_PAGE}&offset={offset}",
+                f"listings?mode=search&operationType__eq=rent&{flt}"
+                f"&embed={EMBED}&order=upAt&limit={PER_PAGE}&page={page}",
             )
             res = data.get("results") or []
             for a in res:
@@ -149,8 +157,7 @@ async def fetch_listings(session: aiohttp.ClientSession) -> dict[str, dict[str, 
                 if a.get("categoryId") not in config.uybor_categories:
                     continue
                 found[str(a["id"])] = a
-            offset += PER_PAGE
-            if not res or offset >= int(data.get("total") or 0):
+            if not res or page * PER_PAGE >= int(data.get("total") or 0):
                 break
             await asyncio.sleep(PAUSE)
     return found

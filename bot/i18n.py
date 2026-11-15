@@ -16,7 +16,7 @@ _T: dict[str, dict[str, str]] = {
         "lang_set": "✅ Til: O'zbekcha",
         "welcome": (
             "Assalomu alaykum, <b>{name}</b>! 👋\n\n"
-            "<b>Chirchiq Arenda</b> — Chirchiq shahridagi ijara uylar bir joyda.\n"
+            "<b>Chirchiq Arenda</b> — Toshkent shahri, Chirchiq va atrofidagi ijara uylar bir joyda.\n"
             "E'lonlar muntazam yangilanib turadi.\n\n"
             "Pastdagi tugma orqali bozorni oching 👇"
         ),
@@ -50,7 +50,7 @@ _T: dict[str, dict[str, str]] = {
         "lang_set": "✅ Язык: Русский",
         "welcome": (
             "Здравствуйте, <b>{name}</b>! 👋\n\n"
-            "<b>Chirchiq Arenda</b> — аренда жилья в Чирчике в одном месте.\n"
+            "<b>Chirchiq Arenda</b> — аренда жилья в Ташкенте, Чирчике и пригородах в одном месте.\n"
             "Объявления регулярно обновляются.\n\n"
             "Откройте маркет кнопкой ниже 👇"
         ),
@@ -84,7 +84,7 @@ _T: dict[str, dict[str, str]] = {
         "lang_set": "✅ Language: English",
         "welcome": (
             "Hello, <b>{name}</b>! 👋\n\n"
-            "<b>Chirchiq Arenda</b> — rental housing in Chirchiq, all in one place.\n"
+            "<b>Chirchiq Arenda</b> — rental housing in Tashkent, Chirchiq and nearby districts, all in one place.\n"
             "Listings are updated regularly.\n\n"
             "Open the market with the button below 👇"
         ),

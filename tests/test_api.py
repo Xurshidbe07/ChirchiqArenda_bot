@@ -331,3 +331,18 @@ def test_joymee_detail_mapping():
     assert m["rooms"] == 2 and m["area"] == Decimal("46.60") and m["floor"] == 5 and m["floors"] == 7
     assert m["district"] == "Chirchiq shahar" and m["seller_name"] == "Ali V" and m["views"] == 60
     assert m["source_url"] == "https://joymee.uz/announcements/42" and m["external_created_at"] is not None
+
+
+def test_area_normalizer():
+    from bot.areas import area_or_default, normalize_area
+
+    assert normalize_area("Чиланзарский район, Ташкент") == "Chilonzor tumani"
+    assert normalize_area("Мирзо-Улугбекский район") == "Mirzo Ulug'bek tumani"
+    assert normalize_area("Среднечирчикский район") == "O'rtachirchiq tumani"   # «Chirchiq» dan oldin
+    assert normalize_area("Чирчик, Ташкентская область") == "Chirchiq shahar"
+    assert normalize_area("городской посёлок Кибрай") == "Qibray tumani"
+    assert normalize_area("Ташкентский район") == "Toshkent tumani"
+    assert normalize_area("Бостанлыкский район") == "Bo'stonliq tumani"
+    assert normalize_area(None, "", "Yunusobod tumani") == "Yunusobod tumani"
+    assert normalize_area("noma'lum joy") is None
+    assert area_or_default("Toshkent shahri", "noma'lum") == "Toshkent shahri"

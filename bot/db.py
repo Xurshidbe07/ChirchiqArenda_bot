@@ -28,7 +28,9 @@ PUBLIC_COND = "h.is_active AND NOT h.admin_hidden AND h.status = 'approved'"
 async def init_db() -> None:
     """Ulanishlar pulini yaratadi va sxemani qo'llaydi."""
     global _pool
-    _pool = await asyncpg.create_pool(config.database_url, min_size=1, max_size=10)
+    # min_size=0 + bo'sh ulanishlar 60 s da yopiladi: Neon kompyuteri bo'sh paytda uxlay oladi (bepul limit tejaladi)
+    _pool = await asyncpg.create_pool(config.database_url, min_size=0, max_size=10,
+                                      max_inactive_connection_lifetime=60)
     async with _pool.acquire() as conn:
         await conn.execute(SCHEMA_PATH.read_text(encoding="utf-8"))
 

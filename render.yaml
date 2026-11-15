@@ -26,8 +26,13 @@ services:
         value: "10"
       - key: SYNC_INTERVAL_MIN
         value: "30"
+      # Hududlar: Toshkent shahri (Joymee region 59, Uybor region 13) + atrofidagi tumanlar
+      - key: JOYMEE_REGIONS
+        value: "59"
       - key: JOYMEE_DISTRICTS
-        value: "166"
+        value: "166,145,151,148,161,157,160,159,150,156,147,154"
+      - key: UYBOR_REGIONS
+        value: "13,12"
       - key: JOYMEE_CATEGORIES
         value: "4,5"
       - key: USD_RATE

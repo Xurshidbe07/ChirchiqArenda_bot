@@ -20,7 +20,7 @@ def is_running() -> bool:
 
 def _sources():
     out = [("joymee", joymee.sync)]
-    if config.uybor_cities:
+    if config.uybor_regions or config.uybor_cities:
         out.append(("uybor", uybor.sync))
     return out
 

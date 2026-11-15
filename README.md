@@ -2,7 +2,7 @@
 
 [![CI/CD](https://github.com/Xurshidbe07/ChirchiqArenda_bot/actions/workflows/ci.yml/badge.svg)](https://github.com/Xurshidbe07/ChirchiqArenda_bot/actions/workflows/ci.yml)
 
-Chirchiq shahrida ijaraga uylar bo'yicha Telegram bot.
+Toshkent shahri, Chirchiq va atrofidagi tumanlarda ijaraga uylar bo'yicha Telegram bot.
 **Python 3.11+ · aiogram 3 · PostgreSQL (asyncpg)**
 
 ## Imkoniyatlar
@@ -60,9 +60,18 @@ OLX/Joymee uslubidagi ijara uylar bozori. Chat pastidagi «🏠 Uylar» menyu tu
 
 Fayllar: `bot/webapp/static/market.html` (interfeys), `bot/webapp/server.py` (`/api/market/*`).
 
+### Qamrov (hududlar)
+**Toshkent shahri** — barcha tumanlari; **Toshkent viloyati** — Chirchiq, Qibray, Bo'stonliq, Zangiota, Toshkent tumani,
+Nurafshon, Yangiyo'l, Yuqorichirchiq, O'rtachirchiq, Quyichirchiq, Parkent. Har manbadan hudud va ijara turi
+bo'yicha **eng yangi** e'lonlar olinadi (Joymee/Uybor ~1000 tadan, Qayoda 240 tadan), eskilari avtomatik yopiladi.
+Joymee har e'lon uchun alohida so'rov talab qiladi, shuning uchun birinchi to'ldirish bosqichma-bosqich
+(`JOYMEE_MAX_NEW`=300 / sinx). Hudud nomlari `bot/areas.py` da bir xil shaklga keltiriladi
+(«Чиланзарский район» → «Chilonzor tumani»), market'dagi «Mavze» filtri shunga tayanadi.
+Hududlarni o'zgartirish: `JOYMEE_REGIONS`, `JOYMEE_DISTRICTS`, `UYBOR_REGIONS`, `QAYODA_CITIES`.
+
 ### E'lonlar manbasi: Joymee scraper
 E'lonlar **Joymee.uz** dan avtomatik tortiladi (`bot/scrapers/joymee.py`) — saytning ochiq JSON API'si
-orqali (`api.joymee.uz/api/v1/announcement/?deal_type=2&district=166`), robots.txt ruxsat bergan.
+orqali (`api.joymee.uz/api/v1/announcement/?deal_type=2&region=59&category=4,5`), robots.txt ruxsat bergan.
 
 - Bot ishga tushganda va keyin har `SYNC_INTERVAL_MIN` daqiqada (`bot/sync.py`); admin paneldagi
   «🔄 Joymee'dan yangilash» tugmasi bilan qo'lda ham.
@@ -81,7 +90,7 @@ robots.txt ga rioya: `/api/` va qidiruvga murojaat yo'q, **Crawl-delay 10s**; al
 har `QAYODA_INTERVAL_MIN` (60) daqiqada, bir sinxron ~1 daqiqa.
 
 ### Ikkinchi manba: Uybor scraper
-`bot/scrapers/uybor.py` — **uybor.uz** ochiq API'si (`api.uybor.uz/api/v1/listings?operationType__eq=rent&city__eq=150`),
+`bot/scrapers/uybor.py` — **uybor.uz** ochiq API'si (`api.uybor.uz/api/v1/listings?operationType__eq=rent&region__eq=13`),
 robots.txt faqat `/admin/`, `/cgi-bin/`, `/tmp/` ni yopadi. Joymee bilan bir sinxronlashda ishlaydi (bir manba
 yiqilsa ikkinchisi to'xtamaydi). `UYBOR_CITIES` (150 = Chirchiq, bo'sh = o'chiq), `UYBOR_CATEGORIES`.
 Uybor telefonni ochiq bermaydi — bunday e'lonlarda market'da «💬 Bog'lanish ↗» tugmasi e'lon sahifasini ochadi.

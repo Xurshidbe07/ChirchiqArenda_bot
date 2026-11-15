@@ -1,4 +1,4 @@
-"""Qayoda (qayoda.uz) dan Chirchiq ijara e'lonlarini tortish — faqat katalog sahifalaridan.
+"""Qayoda (qayoda.uz) dan Toshkent va atrofi ijara e'lonlarini tortish — faqat katalog sahifalaridan.
 
 Qayoda — agregator (Uybor, Realt24, Joymee, OLX va boshq.). robots.txt ochiq katalog sahifalarini
 ruxsat etadi, /api/, qidiruv (/poisk) va kabinetni yopadi, Crawl-delay: 10 talab qiladi.
@@ -26,6 +26,7 @@ from typing import Any
 import aiohttp
 
 from bot import db
+from bot.areas import area_or_default
 from bot.config import config
 
 log = logging.getLogger("scraper.qayoda")
@@ -34,7 +35,6 @@ SOURCE = "qayoda"
 BASE = "https://qayoda.uz"
 HEADERS = {"User-Agent": "ChirchiqArendaBot/1.0 (student project; Telegram @chirchiqarenda_bot)"}
 CRAWL_DELAY = 10.5      # robots.txt: Crawl-delay: 10
-MAX_LIST_PAGES = 10
 
 # (katalog yo'li, ijara turi)
 SECTIONS = (("arenda", "month"), ("posutochno", "day"))
@@ -126,6 +126,7 @@ def parse_cards(page_html: str, rent_period: str) -> dict[str, dict[str, Any]]:
         title = html_lib.unescape(sr.group(1)).strip() if sr else (f"{kind} · {params}".strip(" ·") or "E'lon")
         title = re.sub(r"\s+—\s+[^—]+$", "", title)
         place = _PLACE_RE.search(body)
+        place_text = html_lib.unescape(place.group(1)).strip() if place else ""
         try:
             posted = datetime.fromisoformat(place.group(2).replace("Z", "+00:00")) if place else None
         except ValueError:
@@ -136,13 +137,14 @@ def parse_cards(page_html: str, rent_period: str) -> dict[str, dict[str, Any]]:
         out[qid] = {
             "rent_period": period,
             "title": title[:200],
-            "address": "Chirchiq",
+            "address": place_text or "Toshkent",
             "rooms": int(rooms.group(1)) if rooms and 0 < int(rooms.group(1)) <= 50 else None,
             "price": price[0],
             "currency": price[1],
             "description": "\n".join(p for p in (f"{kind} · {params}".strip(" ·"), "Uy egasidan" if owner else "") if p),
             "contact_phone": None,
-            "district": "Chirchiq shahar",
+            "district": area_or_default("Toshkent shahri" if "Ташкент" in place_text and "област" not in place_text
+                                        else "Toshkent viloyati", place_text, title),
             "area": Decimal(area.group(1).replace(",", ".")) if area else None,
             "floor": int(floors.group(1)) if floors else None,
             "floors": int(floors.group(2)) if floors else None,
@@ -180,7 +182,7 @@ async def sync() -> dict[str, int]:
         async with aiohttp.ClientSession(headers=HEADERS) as session:
             for city_path in config.qayoda_cities:
                 for section, period in SECTIONS:
-                    for page in range(1, MAX_LIST_PAGES + 1):
+                    for page in range(1, config.qayoda_max_pages + 1):
                         q = f"/ru/{section}/{city_path}" + (f"?page={page}" if page > 1 else "")
                         try:
                             page_html = await _get(session, q)

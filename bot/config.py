@@ -18,7 +18,13 @@ class Config:
     webapp_port: int = 8080
     # Market: tashqi manbalardan sinxronlash
     sync_interval_min: int = 30                 # 0 = avtomatik sinxronlash o'chiq
-    joymee_districts: tuple[int, ...] = (166,)  # 166 = Chirchiq shahar
+    # Hududlar: Toshkent shahri (butun) + atrofidagi tumanlar. Har manbadan hudud bo'yicha eng yangilari olinadi.
+    joymee_regions: tuple[int, ...] = (59,)     # 59 = Toshkent shahri (barcha tumanlari)
+    joymee_districts: tuple[int, ...] = (166, 145, 151, 148, 161, 157, 160, 159, 150, 156, 147, 154)
+    #   166 Chirchiq, 145 Bo'stonliq, 151 Qibray, 148 Zangiota, 161 Toshkent t., 157 Nurafshon,
+    #   160/159 Yangiyo'l sh./t., 150 Yuqorichirchiq, 156 O'rtachirchiq, 147 Quyichirchiq, 154 Parkent
+    joymee_max_pages: int = 20                  # har hudud/ijara turi bo'yicha 20 x 50 = 1000 ta eng yangi
+    joymee_max_new: int = 300                   # bir sinxronda ko'pi bilan nechta yangi tafsilot (sekin API)
     joymee_categories: tuple[int, ...] = (4, 5) # 4 = Kvartira, 5 = Uy/dacha
     joymee_deal_types: tuple[int, ...] = (2, 1) # 2 = oylik ijara, 1 = kunlik ijara
     usd_rate: int = 12500                       # 1 y.e necha so'm (filtr uchun)
@@ -29,11 +35,19 @@ class Config:
     # Admin panel JWT: maxfiy kalit (bo'sh = bot tokenidan hosil qilinadi) va amal qilish muddati
     admin_jwt_secret: str = ""
     admin_token_hours: int = 12
-    # Uybor (uybor.uz): bo'sh UYBOR_CITIES = o'chiq
-    uybor_cities: tuple[int, ...] = (150,)                  # 150 = Chirchiq
+    # Uybor (uybor.uz): region 13 = Toshkent shahri, 12 = Toshkent viloyati; bo'sh ikkalasi = o'chiq
+    uybor_regions: tuple[int, ...] = (13, 12)
+    uybor_cities: tuple[int, ...] = ()                      # ixtiyoriy aniq shaharlar (150 = Chirchiq)
+    uybor_max_pages: int = 20                               # 20 x 50 = 1000 ta eng yangi (har region)
     uybor_categories: tuple[int, ...] = (7, 8, 9, 26, 27, 28)  # kvartira, uy, kottej, xona, dacha, xususiy uy
     # Qayoda (qayoda.uz, agregator): katalog yo'llari; bo'sh = o'chiq. Sekin (Crawl-delay 10s) — alohida jadval
-    qayoda_cities: tuple[str, ...] = ("toshkent-viloyati/chirchiq",)
+    qayoda_cities: tuple[str, ...] = (
+        "toshkent",
+        *(f"toshkent-viloyati/{d}" for d in (
+            "chirchiq", "qibray", "bostonliq", "zangiota", "toshkent", "nurafshon", "yangiyol",
+            "yangiyol-tumani", "yuqorichirchiq", "ortachirchiq", "quyichirchiq", "parkent")),
+    )
+    qayoda_max_pages: int = 10                    # har yo'l/bo'lim bo'yicha (10 x 24 = 240 ta eng yangi)
     qayoda_interval_min: int = 60
 
 
@@ -49,6 +63,14 @@ def _parse_admin_ids(raw: str) -> frozenset[int]:
 def _parse_int_list(raw: str, default: tuple[int, ...]) -> tuple[int, ...]:
     vals = tuple(int(p) for p in raw.split(",") if p.strip())
     return vals or default
+
+
+def _opt_list(name: str, default: tuple[int, ...]) -> tuple[int, ...]:
+    """O'zgaruvchi yo'q -> default; bo'sh qiymat (NAME=) -> () ya'ni o'chiq; aks holda ro'yxat."""
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return tuple(int(p) for p in raw.split(",") if p.strip())
 
 
 def load_config() -> Config:
@@ -76,13 +98,19 @@ def load_config() -> Config:
         moderation=os.getenv("MODERATION", "0").strip().lower() in ("1", "true", "yes", "on"),
         admin_jwt_secret=os.getenv("ADMIN_JWT_SECRET", "").strip(),
         admin_token_hours=int(os.getenv("ADMIN_TOKEN_HOURS", "12") or 12),
-        uybor_cities=(() if os.getenv("UYBOR_CITIES", None) == ""
-                      else _parse_int_list(os.getenv("UYBOR_CITIES", ""), (150,))),
+        uybor_regions=_opt_list("UYBOR_REGIONS", (13, 12)),
+        uybor_cities=_opt_list("UYBOR_CITIES", ()),
+        uybor_max_pages=int(os.getenv("UYBOR_MAX_PAGES", "20") or 20),
         uybor_categories=_parse_int_list(os.getenv("UYBOR_CATEGORIES", ""), (7, 8, 9, 26, 27, 28)),
-        qayoda_cities=tuple(p.strip().strip("/") for p in os.getenv("QAYODA_CITIES", "toshkent-viloyati/chirchiq").split(",") if p.strip()),
+        qayoda_cities=(tuple(p.strip().strip("/") for p in os.environ["QAYODA_CITIES"].split(",") if p.strip())
+                       if "QAYODA_CITIES" in os.environ else Config.qayoda_cities),
+        qayoda_max_pages=int(os.getenv("QAYODA_MAX_PAGES", "10") or 10),
         qayoda_interval_min=int(os.getenv("QAYODA_INTERVAL_MIN", "60") or 0),
         sync_interval_min=int(os.getenv("SYNC_INTERVAL_MIN", "30") or 0),
-        joymee_districts=_parse_int_list(os.getenv("JOYMEE_DISTRICTS", ""), (166,)),
+        joymee_regions=_opt_list("JOYMEE_REGIONS", (59,)),
+        joymee_districts=_opt_list("JOYMEE_DISTRICTS", (166, 145, 151, 148, 161, 157, 160, 159, 150, 156, 147, 154)),
+        joymee_max_pages=int(os.getenv("JOYMEE_MAX_PAGES", "20") or 20),
+        joymee_max_new=int(os.getenv("JOYMEE_MAX_NEW", "300") or 300),
         joymee_categories=_parse_int_list(os.getenv("JOYMEE_CATEGORIES", ""), (4, 5)),
         joymee_deal_types=_parse_int_list(os.getenv("JOYMEE_DEAL_TYPES", ""), (2, 1)),
         usd_rate=int(os.getenv("USD_RATE", "12500") or 12500),
