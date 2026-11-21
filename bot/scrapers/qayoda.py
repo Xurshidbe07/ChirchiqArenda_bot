@@ -33,7 +33,7 @@ log = logging.getLogger("scraper.qayoda")
 
 SOURCE = "qayoda"
 BASE = "https://qayoda.uz"
-HEADERS = {"User-Agent": "ArendaUzBot/1.0 (student project; Telegram @chirchiqarenda_bot)"}
+HEADERS = {"User-Agent": "ArendaUzBot/1.0 (student project; Telegram @Arenda1UzBot)"}
 CRAWL_DELAY = 10.5      # robots.txt: Crawl-delay: 10
 
 # (katalog yo'li, ijara turi)
