@@ -16,8 +16,12 @@ _T: dict[str, dict[str, str]] = {
         "lang_set": "✅ Til: O'zbekcha",
         "welcome": (
             "Assalomu alaykum, <b>{name}</b>! 👋\n\n"
-            "<b>Arenda.uz</b> — Toshkent shahri, Chirchiq va atrofidagi ijara uylar bir joyda.\n"
-            "E'lonlar muntazam yangilanib turadi.\n\n"
+            "🏡 <b>Arenda.uz</b> — uy izlashda qulay yordamchingiz!\n\n"
+            "Toshkent va unga yaqin tumanlardagi kvartira, uy va boshqa ijara variantlari.\n\n"
+            "📌 Dolzarb e'lonlar\n"
+            "🔄 Takliflar muntazam yangilanadi\n"
+            "🔎 Uy izlash qulay\n\n"
+            "O'zingizga mos uyni tez va qulay toping!\n\n\n"
             "Pastdagi tugma orqali bozorni oching 👇"
         ),
         "market_title": "🏠 Ijara uylar bozori:",
@@ -50,8 +54,12 @@ _T: dict[str, dict[str, str]] = {
         "lang_set": "✅ Язык: Русский",
         "welcome": (
             "Здравствуйте, <b>{name}</b>! 👋\n\n"
-            "<b>Arenda.uz</b> — аренда жилья в Ташкенте, Чирчике и пригородах в одном месте.\n"
-            "Объявления регулярно обновляются.\n\n"
+            "🏡 <b>Arenda.uz</b> — ваш удобный помощник в поиске жилья!\n\n"
+            "Квартиры, дома и другие варианты аренды в Ташкенте и близлежащих районах.\n\n"
+            "📌 Актуальные объявления\n"
+            "🔄 Регулярное обновление предложений\n"
+            "🔎 Удобный поиск жилья\n\n"
+            "Найдите подходящее жильё быстро и удобно!\n\n\n"
             "Откройте маркет кнопкой ниже 👇"
         ),
         "market_title": "🏠 Маркет аренды жилья:",
@@ -84,8 +92,12 @@ _T: dict[str, dict[str, str]] = {
         "lang_set": "✅ Language: English",
         "welcome": (
             "Hello, <b>{name}</b>! 👋\n\n"
-            "<b>Arenda.uz</b> — rental housing in Tashkent, Chirchiq and nearby districts, all in one place.\n"
-            "Listings are updated regularly.\n\n"
+            "🏡 <b>Arenda.uz</b> — your convenient assistant for finding a home!\n\n"
+            "Apartments, houses and other rentals in Tashkent and nearby districts.\n\n"
+            "📌 Up-to-date listings\n"
+            "🔄 Regularly updated offers\n"
+            "🔎 Easy home search\n\n"
+            "Find the right home quickly and easily!\n\n\n"
             "Open the market with the button below 👇"
         ),
         "market_title": "🏠 Rental housing market:",
