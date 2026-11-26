@@ -14,7 +14,7 @@ from aiogram.types import (
     WebAppInfo,
 )
 
-from bot import db, keepalive, sync, tunnel
+from bot import db, instagram, keepalive, sync, tunnel
 from bot.config import config
 from bot.handlers import admin, user
 from bot.i18n import LANGS, t
@@ -145,6 +145,7 @@ async def main() -> None:
     await set_commands(bot, webapp_url)
     await set_profile(bot)
     sync.start_background()
+    instagram.start_background()
     keepalive.start_background(webapp_url)
     log.info("Bot ishga tushdi. Superadminlar: %s", sorted(config.admin_ids))
 
@@ -154,6 +155,7 @@ async def main() -> None:
     finally:
         await keepalive.stop_background()
         await sync.stop_background()
+        await instagram.stop_background()
         await runner.cleanup()
         await tunnel.stop()
         await db.close_db()

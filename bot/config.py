@@ -49,6 +49,21 @@ class Config:
     )
     qayoda_max_pages: int = 10                    # har yo'l/bo'lim bo'yicha (10 x 24 = 240 ta eng yangi)
     qayoda_interval_min: int = 60
+    # Instagram (Content Publishing API): token + akkaunt bo'lmasa modul o'chiq
+    ig_access_token: str = ""
+    ig_account_id: str = ""
+    ig_graph_version: str = "v23.0"
+    ig_autopost: bool = False                     # True = fon vazifasi yangi e'lonlarni o'zi chiqaradi
+    ig_interval_min: int = 60                     # avtopost oralig'i
+    ig_posts_per_run: int = 1                     # bir urinishda nechta post (Instagram kuniga ~50 ta ruxsat beradi)
+    ig_sources: tuple[str, ...] = ("admin",)      # qaysi manba e'lonlari: admin = bot/market orqali berilganlar
+    ig_max_age_days: int = 3                      # avtopost faqat shu kundan yangi e'lonlarni oladi
+    ig_bot_username: str = "Arenda1UzBot"         # post matnidagi havola
+    public_base_url: str = ""                     # Instagram rasmni yuklab oladigan ochiq server manzili
+
+    @property
+    def ig_enabled(self) -> bool:
+        return bool(self.ig_access_token and self.ig_account_id)
 
 
 def _parse_admin_ids(raw: str) -> frozenset[int]:
@@ -114,6 +129,17 @@ def load_config() -> Config:
         joymee_categories=_parse_int_list(os.getenv("JOYMEE_CATEGORIES", ""), (4, 5)),
         joymee_deal_types=_parse_int_list(os.getenv("JOYMEE_DEAL_TYPES", ""), (2, 1)),
         usd_rate=int(os.getenv("USD_RATE", "12500") or 12500),
+        ig_access_token=os.getenv("IG_ACCESS_TOKEN", "").strip(),
+        ig_account_id=os.getenv("IG_ACCOUNT_ID", "").strip(),
+        ig_graph_version=os.getenv("IG_GRAPH_VERSION", "").strip() or "v23.0",
+        ig_autopost=os.getenv("IG_AUTOPOST", "0").strip().lower() in ("1", "true", "yes", "on"),
+        ig_interval_min=int(os.getenv("IG_INTERVAL_MIN", "60") or 60),
+        ig_posts_per_run=int(os.getenv("IG_POSTS_PER_RUN", "1") or 1),
+        ig_sources=tuple(s.strip() for s in os.getenv("IG_SOURCES", "admin").split(",") if s.strip()),
+        ig_max_age_days=int(os.getenv("IG_MAX_AGE_DAYS", "3") or 3),
+        ig_bot_username=os.getenv("IG_BOT_USERNAME", "").strip().lstrip("@") or "Arenda1UzBot",
+        # Lokal skriptdan post qilinganda ham rasm Render serveridan beriladi (Instagram localhost'ni ko'rmaydi)
+        public_base_url=(os.getenv("PUBLIC_BASE_URL", "").strip() or webapp_url).rstrip("/"),
     )
 
 

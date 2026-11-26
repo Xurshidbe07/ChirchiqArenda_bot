@@ -126,3 +126,19 @@ CREATE TABLE IF NOT EXISTS sync_log (
     seen        INTEGER NOT NULL DEFAULT 0,
     error       TEXT
 );
+
+-- Instagram'ga chiqarilgan e'lonlar (har e'lon ko'pi bilan bir marta)
+CREATE TABLE IF NOT EXISTS instagram_posts (
+    house_id     INTEGER PRIMARY KEY REFERENCES houses(id) ON DELETE CASCADE,
+    status       TEXT NOT NULL DEFAULT 'publishing' CHECK (status IN ('publishing', 'published', 'failed')),
+    container_id TEXT,
+    media_id     TEXT,
+    permalink    TEXT,
+    caption      TEXT,
+    error        TEXT,
+    attempts     INTEGER NOT NULL DEFAULT 0,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    published_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS instagram_posts_status_idx ON instagram_posts (status);

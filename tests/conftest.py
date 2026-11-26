@@ -25,6 +25,10 @@ os.environ.setdefault("DATABASE_URL", "postgresql://postgres:postgres@localhost:
 os.environ["SYNC_INTERVAL_MIN"] = "0"
 os.environ["KEEPALIVE_MIN"] = "0"
 os.environ.setdefault("MODERATION", "0")
+# Instagram: testlar haqiqiy akkauntga HECH QACHON post qilmasin
+os.environ["IG_ACCESS_TOKEN"] = "test-ig-token"
+os.environ["IG_ACCOUNT_ID"] = "17800000000000000"
+os.environ["IG_AUTOPOST"] = "0"
 
 from bot.config import config  # noqa: E402
 

@@ -5,9 +5,11 @@ Autentifikatsiya: Telegram Web App `initData` (HMAC-SHA256, bot tokeni bilan tek
   /api/admins/*   — faqat superadmin
   /api/market/*   — har qanday bloklanmagan foydalanuvchi; e'lon berish uchun ro'yxatdan o'tish shart
   /api/photo/*    — har qanday haqiqiy initData
+  /ig/img/*       — ochiq, lekin faqat imzolangan vaqtinchalik havola (Instagram rasmni shu yerdan yuklaydi)
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import html
@@ -26,7 +28,7 @@ from aiogram.types import BufferedInputFile
 from aiogram.utils.web_app import safe_parse_webapp_init_data
 from aiohttp import web
 
-from bot import db, sync
+from bot import db, instagram, sync
 from bot.auth import TokenError, verify_admin_token
 from bot.config import config
 from bot.i18n import LANGS, norm_lang, t
@@ -352,6 +354,28 @@ async def api_photo(request: web.Request) -> web.Response:
         _cache_put(file_id, content)
     return web.Response(body=content, content_type="image/jpeg",
                         headers={"Cache-Control": "private, max-age=86400"})
+
+
+async def ig_image(request: web.Request) -> web.Response:
+    """Instagram uchun e'lon rasmi: imzo + muddat tekshiriladi, faqat ochiq e'lonlar, Instagram'ga mos JPEG."""
+    hid, n = int(request.match_info["id"]), int(request.match_info["n"])
+    if not instagram.verify(hid, n, request.query.get("exp", ""), request.query.get("sig", "")):
+        raise web.HTTPForbidden(text="Havola noto'g'ri yoki muddati o'tgan.")
+    key = f"ig:{hid}:{n}"
+    content = _photo_cache.get(key)
+    if content is None:
+        h = await db.get_house(hid)
+        refs = instagram.photo_refs(h) if h is not None and instagram.is_public(h) else []
+        if n >= len(refs):
+            raise web.HTTPNotFound(text="Rasm topilmadi.")
+        try:
+            raw = await instagram.fetch_photo(request.app["bot"], refs[n])
+            content = await asyncio.to_thread(instagram.prepare_jpeg, raw)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("IG rasm tayyorlanmadi #%s/%s: %s", hid, n, exc)
+            raise web.HTTPBadGateway(text="Rasmni olib bo'lmadi.")
+        _cache_put(key, content)
+    return web.Response(body=content, content_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
 
 
 # ------------------------------------------------------------- admin API ---
@@ -713,6 +737,7 @@ def create_app(bot: Bot) -> web.Application:
         web.get("/market", market_page),
         web.get("/health", health),
         web.get("/api/photo/{file_id}", api_photo),
+        web.get(r"/ig/img/{id:\d+}/{n:\d+}.jpg", ig_image),
         # admin
         web.get("/api/me", api_me),
         web.get("/api/stats", api_stats),

@@ -98,6 +98,21 @@ Uybor telefonni ochiq bermaydi — bunday e'lonlarda market'da «💬 Bog'lanish
 ### Matnli zaxira
 Mini App ishlamasa (`WEBAPP_URL` yo'q), «🏠 Uylar» tugmasi e'lonlarni chatda varaqlab beradi.
 
+### Instagram avtopost (`bot/instagram.py`)
+Bazadagi e'lonni Instagram'ga chiqaradi (Instagram Graph API, Content Publishing):
+`POST /{IG_ACCOUNT_ID}/media` (konteyner, 2+ rasm bo'lsa karusel) → `status_code=FINISHED` → `POST /{IG_ACCOUNT_ID}/media_publish`.
+Holat `instagram_posts` jadvaliga yoziladi: `publishing` → `published` (`media_id`, `permalink`) yoki `failed` (`error`).
+Bir e'lon ikki marta chiqmaydi.
+
+- **Rasm havolasi.** Instagram faqat ochiq `https://` JPEG'ni oladi. Server `GET /ig/img/{house_id}/{n}.jpg?exp=…&sig=…`
+  manzilida e'lon rasmini (Telegram `file_id` yoki tashqi URL) JPEG'ga o'girib, 4:5…1.91:1 nisbatga keltirib beradi.
+  Havola HMAC bilan imzolangan va 24 soatda eskiradi; faqat ochiq e'lonlar rasmi beriladi.
+- **Qo'lda:** `python scripts/ig_post.py` (ko'rish), `--check-images`, `--house ID --publish`, `--status`.
+  `DATABASE_URL` server ishlatadigan baza (Neon) bo'lishi kerak.
+- **Avtomatik:** `IG_AUTOPOST=1` — server har `IG_INTERVAL_MIN` daqiqada `IG_SOURCES` manbasidagi, oxirgi
+  `IG_MAX_AGE_DAYS` kundagi, hali chiqmagan e'londan `IG_POSTS_PER_RUN` tasini chiqaradi.
+- `IG_ACCESS_TOKEN` maxfiy: faqat `.env` va Render Environment'da saqlanadi.
+
 ## O'rnatish
 
 ```bash
@@ -191,6 +206,7 @@ ChirchiqArendabot/
 │   ├── tunnel.py        # dev uchun cloudflared HTTPS tunnel
 │   ├── sync.py          # davriy sinxronlash (fon vazifasi)
 │   ├── keepalive.py     # bepul hostingda uxlamaslik uchun o'ziga ping
+│   ├── instagram.py     # Instagram'ga avtopost (Graph API) + rasm tayyorlash
 │   ├── scrapers/
 │   │   ├── joymee.py    # Joymee.uz API dan e'lonlarni tortish
 │   │   ├── uybor.py     # Uybor.uz API dan e'lonlarni tortish
@@ -217,6 +233,7 @@ ChirchiqArendabot/
   `source_id`, `source_url`, `seller_*`, `views`, `is_active`, `admin_hidden`, `last_seen_at`
 - `favorites` — klient sevimlilari
 - `sync_log` — sinxronlash jurnali
+- `instagram_posts` — Instagram'ga chiqarilgan e'lonlar: `house_id`, `status`, `media_id`, `permalink`, `error`, `attempts`
 
 ## Jamoa uchun
 

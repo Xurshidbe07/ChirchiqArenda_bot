@@ -527,3 +527,66 @@ async def last_sync(source: str = "joymee") -> dict[str, Any] | None:
         if d[k] is not None:
             d[k] = d[k].isoformat()
     return d
+
+
+# ------------------------------------------------------------- INSTAGRAM ---
+
+async def ig_candidates(sources: tuple[str, ...] | list[str], max_age_days: int | None, limit: int,
+                        house_id: int | None = None, retry_failed: bool = False) -> list[asyncpg.Record]:
+    """Instagram'ga hali chiqmagan, ochiq va rasmli e'lonlar (eng yangisi birinchi).
+
+    house_id berilsa — faqat shu e'lon (manba va yosh filtrisiz).
+    """
+    return await pool().fetch(
+        f"""
+        SELECT h.*, p.status AS ig_status, p.attempts AS ig_attempts
+          FROM houses h
+     LEFT JOIN instagram_posts p ON p.house_id = h.id
+         WHERE {PUBLIC_COND}
+           AND (cardinality(h.photo_urls) > 0 OR h.photo_file_id IS NOT NULL)
+           AND (p.house_id IS NULL OR ($5 AND p.status = 'failed'))
+           AND CASE WHEN $4::int IS NOT NULL THEN h.id = $4
+                    ELSE h.source = ANY($1::text[])
+                         AND ($2::int IS NULL OR COALESCE(h.external_created_at, h.created_at)
+                                                 > NOW() - make_interval(days => $2::int))
+               END
+      ORDER BY COALESCE(h.external_created_at, h.created_at) DESC
+         LIMIT $3
+        """,
+        list(sources), max_age_days, limit, house_id, retry_failed,
+    )
+
+
+async def ig_claim(house_id: int, caption: str) -> bool:
+    """E'lonni «publishing» deb band qiladi. Allaqachon chiqgan/chiqayotgan bo'lsa False (takroriy post yo'q)."""
+    row = await pool().fetchrow(
+        """
+        INSERT INTO instagram_posts (house_id, status, caption, attempts)
+        VALUES ($1, 'publishing', $2, 1)
+        ON CONFLICT (house_id) DO UPDATE
+           SET status = 'publishing', caption = EXCLUDED.caption, error = NULL,
+               attempts = instagram_posts.attempts + 1, updated_at = NOW()
+         WHERE instagram_posts.status = 'failed'
+        RETURNING house_id
+        """,
+        house_id, caption,
+    )
+    return row is not None
+
+
+_IG_FIELDS = ("status", "container_id", "media_id", "permalink", "error")
+
+
+async def ig_update(house_id: int, **fields: Any) -> None:
+    sets = [f"{k} = ${i}" for i, k in enumerate((k for k in fields if k in _IG_FIELDS), start=2)]
+    vals = [fields[k] for k in fields if k in _IG_FIELDS]
+    if fields.get("status") == "published":
+        sets.append("published_at = NOW()")
+    await pool().execute(
+        f"UPDATE instagram_posts SET {', '.join(sets)}, updated_at = NOW() WHERE house_id = $1",
+        house_id, *vals,
+    )
+
+
+async def ig_get(house_id: int) -> asyncpg.Record | None:
+    return await pool().fetchrow("SELECT * FROM instagram_posts WHERE house_id = $1", house_id)
